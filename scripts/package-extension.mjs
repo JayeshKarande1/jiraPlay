@@ -33,8 +33,8 @@ try {
   renameSync(README, BACKUP)
   swapped = true
   copyFileSync(STORE, README)
-  const args = ['vsce', 'package', '--no-dependencies', '--allow-missing-repository', '--no-rewrite-relative-links']
-  const run = spawnSync('npx', args, { stdio: 'inherit' })
+  const args = ['package', '--no-dependencies', '--allow-missing-repository', '--no-rewrite-relative-links']
+  const run = spawnSync(process.execPath, ['node_modules/@vscode/vsce/vsce', ...args], { stdio: 'inherit' })
   process.exitCode = run.status ?? 1
 } finally {
   restore()
