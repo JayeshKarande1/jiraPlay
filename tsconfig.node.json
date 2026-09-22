@@ -1,0 +1,9 @@
+{
+  // The web app's API server and build config: Node only, no DOM.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": ["node"]
+  },
+  "include": ["server", "shared", "vite.config.ts", "vitest.config.ts"]
+}

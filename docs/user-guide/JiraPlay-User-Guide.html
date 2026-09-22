@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JiraPlay: What You Can Do</title>
+<style>
+  :root { --ink: #1e2230; --muted: #5b6275; --line: #e3e6ee; --accent: #b7791f; --panel: #f6f7fb; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #fff; }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 24px 64px; }
+  h1, h2, h3 { line-height: 1.25; }
+  h1 { font-size: 36px; margin: 20px 0 6px; }
+  h2 { font-size: 24px; margin: 52px 0 10px; padding-top: 10px; border-top: 3px solid var(--accent); }
+  h3 { font-size: 17px; margin: 22px 0 6px; }
+  .lead { font-size: 18px; color: var(--muted); margin: 0 0 8px; }
+  .cover { text-align: center; padding: 16px 0 8px; }
+  .cover img { width: 440px; max-width: 100%; border-radius: 16px; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .highlights { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 24px 0; }
+  .highlight { background: var(--panel); border-radius: 12px; padding: 14px 16px; }
+  .highlight strong { display: block; margin-bottom: 2px; }
+  .highlight span { color: var(--muted); font-size: 14px; }
+  figure { margin: 18px 0 24px; }
+  figure img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); box-shadow: 0 6px 20px rgba(20, 24, 40, 0.12); }
+  figure.narrow img { width: auto; max-width: 100%; max-height: 700px; margin: 0 auto; }
+  figcaption { margin-top: 8px; font-size: 13px; color: var(--muted); text-align: center; }
+  ul.features { padding-left: 20px; }
+  ul.features li { margin: 6px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--panel); }
+  kbd, code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid figure { margin: 0; }
+  @media (max-width: 640px) { .grid, .highlights { grid-template-columns: 1fr; } }
+  @page { size: A4; margin: 16mm 14mm; }
+  @media print {
+    main { padding: 0; max-width: none; }
+    h2 { break-before: page; margin-top: 0; }
+    figure, table, .highlight { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+<section class="cover">
+  <img src="screenshots/00-logo.jpg" alt="JiraPlay logo" />
+  <h1>What you can do with JiraPlay</h1>
+  <p class="lead">Your team's Jira board, turned into a game. Finish work, earn XP, level up.</p>
+  <p class="meta">Screenshots show JiraPlay's built-in demo team</p>
+</section>
+
+<p>JiraPlay shows your team's Jira Cloud issues as a game. Every teammate is a hero with a level, an XP bar and hearts, and their issues are their quests. It's still your real Jira: every status change, comment, reassignment and new issue you make in JiraPlay happens in Jira straight away.</p>
+<p>Use it inside <strong>VS Code</strong>, next to your code, or in your <strong>web browser</strong>.</p>
+
+<div class="highlights">
+  <div class="highlight"><strong>👥 See the whole team at once</strong><span>Every teammate's work, level and overdue issues on one screen.</span></div>
+  <div class="highlight"><strong>🗂️ Your real Jira board</strong><span>The same columns as your Jira board, like Code Review.</span></div>
+  <div class="highlight"><strong>✍️ Work without leaving</strong><span>Change status, comment, reassign and create issues.</span></div>
+  <div class="highlight"><strong>🏆 Earn XP and level up</strong><span>Finished issues earn XP, with a celebration when you level up.</span></div>
+  <div class="highlight"><strong>📊 Your own dashboard</strong><span>Everything assigned to you across Jira, with counts and search.</span></div>
+  <div class="highlight"><strong>🎨 Seven game themes</strong><span>Arcade, Space, Heist, Wizard, Cyber, Block World and Grand Prix.</span></div>
+</div>
+
+<h2>Get connected in two minutes</h2>
+<p>A step-by-step guide walks you through connecting your Jira account: your Jira site, your email and an API token, with a button that opens Atlassian's token page. JiraPlay checks everything with Jira before saving. Until you connect, you can explore with a demo team.</p>
+<figure class="narrow">
+  <img src="screenshots/01-connect-jira-guide.png" alt="The Connect Jira guide" />
+  <figcaption>The Connect Jira guide</figcaption>
+</figure>
+
+<h2>See your whole team at a glance</h2>
+<figure>
+  <img src="screenshots/02-board-overview.png" alt="The whole team on one screen" />
+  <figcaption>The current sprint and a card for every teammate</figcaption>
+</figure>
+<ul class="features">
+  <li><strong>Sprint banner</strong>: the sprint's name, dates, days left, goal and how much of it is done.</li>
+  <li><strong>Hero cards</strong>: each teammate's level, XP, hearts and open issues, with overdue and hardest work first.</li>
+  <li><strong>Party list</strong>: jump to any teammate. <strong>YOU</strong> marks you, and <strong>Unassigned</strong> collects issues nobody owns yet.</li>
+  <li><strong>New work stands out</strong>: a teammate's card glows when they pick up a new issue.</li>
+  <li><strong>Keyboard friendly</strong>: <kbd>←</kbd> <kbd>→</kbd> to switch teammates, <kbd>Enter</kbd> to open, <kbd>Esc</kbd> to go back.</li>
+</ul>
+
+<h2>Each teammate's board, just like Jira</h2>
+<figure>
+  <img src="screenshots/03-hero-board-columns.png" alt="A teammate's page with board columns" />
+  <figcaption>A teammate's issues in the same columns as your Jira board</figcaption>
+</figure>
+<p>Open any teammate to see their issues in <strong>the same columns as your Jira board</strong>, for example To Do, In Progress, Code Review and Done. JiraPlay reads the columns from Jira, so they stay in step when your board changes.</p>
+
+<h2>Everything about an issue in one place</h2>
+<figure>
+  <img src="screenshots/04-issue-details.png" alt="Issue details with comments" />
+  <figcaption>Issue details, comments and a reply being written</figcaption>
+</figure>
+<ul class="features">
+  <li>See the assignee, status, type, priority, story points, due date and description.</li>
+  <li><strong>Difficulty stars</strong> show how big the issue is, and <strong>Reward</strong> shows the XP it's worth.</li>
+  <li><strong>Read and add comments</strong>. Press <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> to post.</li>
+  <li><strong>Open in Jira</strong> whenever you need the full Jira page.</li>
+</ul>
+
+<h2>Move work forward</h2>
+<figure class="narrow">
+  <img src="screenshots/05-change-status.png" alt="Changing an issue's status" />
+  <figcaption>The status menu only offers moves your Jira workflow allows</figcaption>
+</figure>
+<ul class="features">
+  <li><strong>Change status</strong>: pick the next step from the moves your Jira workflow allows.</li>
+  <li><strong>Mark done</strong> with one click on the issue's icon.</li>
+  <li><strong>Reassign</strong> by dragging an issue onto another teammate, or onto Unassigned.</li>
+  <li><strong>Create issues</strong> right from a teammate's card.</li>
+  <li><strong>Completed issues</strong> are clearly marked with a green ✓ and the XP they earned.</li>
+</ul>
+
+<h2>Earn XP and level up</h2>
+<figure class="narrow">
+  <img src="screenshots/08-xp-level-up.png" alt="Level up celebration" style="width: 360px" />
+  <figcaption>Finishing an issue that levels you up</figcaption>
+</figure>
+<table>
+  <tr><th>You get</th><th>How</th></tr>
+  <tr><td>XP</td><td>10 XP per story point for every finished issue, or 10 XP if it has no points.</td></tr>
+  <tr><td>Levels</td><td>Level up as XP adds up: level 2 at 10 XP, 3 at 40, 4 at 90, 5 at 160, and so on.</td></tr>
+  <tr><td>Hearts</td><td>Everyone has 4 hearts and loses one for each overdue issue.</td></tr>
+  <tr><td>Difficulty stars</td><td>1 to 5 stars from story points, or from priority when there are no points.</td></tr>
+  <tr><td>Sprint progress</td><td>The whole team's XP and how much of the sprint is done, shown at the top.</td></tr>
+</table>
+
+<h2>Your personal dashboard</h2>
+<p>Click your picture in the top right to open your profile: your level and XP, plus a dashboard of your work.</p>
+<div class="grid">
+  <figure>
+    <img src="screenshots/06-profile-this-board.png" alt="Profile, This board tab" />
+    <figcaption><strong>This board</strong>: your issues in the current sprint</figcaption>
+  </figure>
+  <figure>
+    <img src="screenshots/07-profile-all-my-issues.png" alt="Profile, All my issues tab" />
+    <figcaption><strong>All my issues</strong>: everything assigned to you in Jira</figcaption>
+  </figure>
+</div>
+<ul class="features">
+  <li><strong>Counts</strong> of your assigned, to do, in progress, done and overdue issues, and your percentage done.</li>
+  <li><strong>Filter</strong> by clicking a count, or by one of your board's columns.</li>
+  <li><strong>Search</strong> by title, or type an issue key to jump straight to it.</li>
+  <li><strong>All my issues</strong> goes beyond the sprint to everything assigned to you anywhere in Jira.</li>
+</ul>
+
+<h2>Make it yours: seven themes</h2>
+<p>Switch themes from the menu at the top. Each one changes the colours, fonts, wording, hero classes, icons and sound effects, and plays a short intro as it loads.</p>
+<figure class="narrow">
+  <img src="screenshots/09-theme-menu.png" alt="The theme menu" />
+  <figcaption>The theme menu</figcaption>
+</figure>
+<figure>
+  <img src="screenshots/15-theme-intro-grand-prix.png" alt="Grand Prix theme intro" />
+  <figcaption>Switching to Grand Prix: a race car speeds across the screen</figcaption>
+</figure>
+<table>
+  <tr><th>Theme</th><th>Feel</th><th>Your team is a…</th></tr>
+  <tr><td>🕹️ Arcade</td><td>Classic pixel game</td><td>Party of heroes</td></tr>
+  <tr><td>🚀 Space Fleet</td><td>Starfield and warp speed</td><td>Fleet of pilots</td></tr>
+  <tr><td>🚓 Heist City</td><td>Sunset streets</td><td>Crew</td></tr>
+  <tr><td>🪄 Wizard School</td><td>Candlelit halls and gold</td><td>House of wizards</td></tr>
+  <tr><td>🌃 Neon Cyber</td><td>Neon lights and glitches</td><td>Squad of runners</td></tr>
+  <tr><td>⛏️ Block World</td><td>Grass, dirt and blocks</td><td>Village of crafters</td></tr>
+  <tr><td>🏁 Grand Prix</td><td>Chequered flags and speed</td><td>Team of drivers</td></tr>
+</table>
+<div class="grid">
+  <figure><img src="screenshots/10-theme-space.png" alt="Space Fleet theme" /><figcaption>Space Fleet</figcaption></figure>
+  <figure><img src="screenshots/11-theme-heist.png" alt="Heist City theme" /><figcaption>Heist City</figcaption></figure>
+  <figure><img src="screenshots/12-theme-wizard.png" alt="Wizard School theme" /><figcaption>Wizard School</figcaption></figure>
+  <figure><img src="screenshots/13-theme-cyber.png" alt="Neon Cyber theme" /><figcaption>Neon Cyber</figcaption></figure>
+  <figure><img src="screenshots/14-theme-blocky.png" alt="Block World theme" /><figcaption>Block World</figcaption></figure>
+  <figure><img src="screenshots/16-theme-racing.png" alt="Grand Prix theme" /><figcaption>Grand Prix</figcaption></figure>
+</div>
+
+<h2>Works where you work</h2>
+<h3>In VS Code</h3>
+<ul class="features">
+  <li><strong>JiraPlay icon</strong> in the left sidebar to open your board.</li>
+  <li><strong>Your level in the status bar</strong>, e.g. <code>⚔ LVL 3 · 7 open</code>, updated even when the board is closed.</li>
+  <li><strong>Level-up notifications</strong> when you reach a new level.</li>
+  <li><strong>Your own Jira account</strong>: every change is made as you.</li>
+</ul>
+<h3>In your browser</h3>
+<ul class="features">
+  <li>The same board at <code>http://localhost:5173</code>, running on your own computer.</li>
+</ul>
+
+<h2>Safe with your Jira account</h2>
+<ul class="features">
+  <li>Your API token is only ever sent to your own Jira site.</li>
+  <li>In VS Code it's kept in your system keychain, and <strong>Sign out of Jira</strong> removes it.</li>
+  <li>JiraPlay has no server of its own and collects no data.</li>
+</ul>
+
+<h2>Get started</h2>
+<ol>
+  <li><strong>VS Code</strong>: in the Extensions view, open the <strong>…</strong> menu, choose <strong>Install from VSIX…</strong> and pick the JiraPlay file. <strong>Web app</strong>: run <code>npm install</code> and <code>npm run dev</code> in the JiraPlay folder, then open <code>http://localhost:5173</code>.</li>
+  <li>Follow the <strong>Connect Jira</strong> guide that opens.</li>
+  <li>Finish an issue and watch your XP grow.</li>
+</ol>
+
+</main>
+</body>
+</html>

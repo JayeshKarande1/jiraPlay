@@ -1,0 +1,5 @@
+{
+  // Editors use the references to pick the right project per file. `npm run typecheck` checks each one.
+  "files": [],
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }, { "path": "./tsconfig.extension.json" }]
+}

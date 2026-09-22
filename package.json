@@ -1,0 +1,345 @@
+{
+  "name": "jiraplay",
+  "private": true,
+  "displayName": "JiraPlay",
+  "description": "Your team's Jira issues as a game-style character select screen.",
+  "keywords": [
+    "jira",
+    "atlassian",
+    "gamification",
+    "sprint",
+    "scrum",
+    "kanban",
+    "agile",
+    "productivity"
+  ],
+  "publisher": "jayeshkarande",
+  "license": "MIT",
+  "version": "1.2.0",
+  "type": "module",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "main": "./dist-extension/extension.cjs",
+  "icon": "media/icon.png",
+  "activationEvents": [
+    "onStartupFinished",
+    "onWebviewPanel:jiraPlay.board"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "jiraPlay",
+          "title": "JiraPlay",
+          "icon": "media/sidebar.svg"
+        }
+      ]
+    },
+    "views": {
+      "jiraPlay": [
+        {
+          "id": "jiraPlay.home",
+          "name": "Board"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "jiraPlay.home",
+        "contents": "Your team's Jira issues as a game board.\n[Open Board](command:jiraPlay.openBoard)\nYou're looking at demo data. Connect your Jira account in about two minutes.\n[Connect Jira](command:jiraPlay.signIn)",
+        "when": "!jiraPlay.connected"
+      },
+      {
+        "view": "jiraPlay.home",
+        "contents": "Your team's Jira issues as a game board.\n[Open Board](command:jiraPlay.openBoard)\n[Update Jira connection](command:jiraPlay.signIn)",
+        "when": "jiraPlay.connected"
+      }
+    ],
+    "commands": [
+      {
+        "command": "jiraPlay.openBoard",
+        "title": "Open Board",
+        "category": "JiraPlay",
+        "icon": "$(play)"
+      },
+      {
+        "command": "jiraPlay.signIn",
+        "title": "Sign in to Jira",
+        "category": "JiraPlay"
+      },
+      {
+        "command": "jiraPlay.signOut",
+        "title": "Sign out of Jira",
+        "category": "JiraPlay"
+      },
+      {
+        "command": "jiraPlay.openIssue",
+        "title": "Open Issue on Board",
+        "category": "JiraPlay"
+      },
+      {
+        "command": "jiraPlay.refresh",
+        "title": "Refresh",
+        "category": "JiraPlay",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "jiraPlay.createIssueFromCode",
+        "title": "Create Issue from Selection",
+        "category": "JiraPlay",
+        "icon": "$(add)"
+      }
+    ],
+    "configuration": {
+      "title": "JiraPlay",
+      "properties": {
+        "jiraPlay.jiraBaseUrl": {
+          "type": "string",
+          "default": "",
+          "scope": "application",
+          "description": "Your Jira site URL, e.g. https://your-site.atlassian.net. User settings only, so a workspace can't send your token elsewhere."
+        },
+        "jiraPlay.email": {
+          "type": "string",
+          "default": "",
+          "scope": "application",
+          "description": "The email you log into Jira with."
+        },
+        "jiraPlay.allowedHosts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "application",
+          "description": "Extra hosts your API token may be sent to, for a Jira Cloud site on a custom domain, e.g. jira.example.com. Sites on atlassian.net are always allowed."
+        },
+        "jiraPlay.jql": {
+          "type": "string",
+          "default": "",
+          "description": "JQL that picks the issues for the board, e.g. project = ABC AND sprint in openSprints()"
+        },
+        "jiraPlay.projectKey": {
+          "type": "string",
+          "default": "",
+          "description": "Project key used when creating new issues."
+        },
+        "jiraPlay.issueType": {
+          "type": "string",
+          "default": "Task",
+          "description": "Issue type used when creating new issues."
+        },
+        "jiraPlay.pointsField": {
+          "type": "string",
+          "default": "",
+          "description": "Story points field id, e.g. customfield_10016. Leave empty to find it on your Jira site automatically."
+        },
+        "jiraPlay.sprintField": {
+          "type": "string",
+          "default": "",
+          "description": "Sprint field id, e.g. customfield_10020. Leave empty to find it on your Jira site automatically."
+        },
+        "jiraPlay.boardId": {
+          "type": "string",
+          "default": "",
+          "description": "Id of the Jira board whose columns the hero page shows (the number in the board's URL). Leave empty to use your project's board."
+        },
+        "jiraPlay.theme": {
+          "type": "string",
+          "default": "arcade",
+          "enum": [
+            "arcade",
+            "space",
+            "heist",
+            "wizard",
+            "cyber",
+            "blocky",
+            "racing",
+            "daylight"
+          ],
+          "enumItemLabels": [
+            "Arcade",
+            "Space Fleet",
+            "Heist City",
+            "Wizard School",
+            "Neon Cyber",
+            "Block World",
+            "Grand Prix",
+            "Daylight (light)"
+          ],
+          "description": "The board's game theme. You can also change it from the menu at the top of the board."
+        },
+        "jiraPlay.todoCodeLens": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a link above TODO and FIXME comments: the issue it names, or a way to create one."
+        },
+        "jiraPlay.savedViews": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "jql": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "jql"
+            ]
+          },
+          "default": [],
+          "description": "Named JQL queries the board can switch between, from the menu beside the sprint name."
+        }
+      }
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "jiraPlay.openBoard",
+          "when": "view == jiraPlay.home",
+          "group": "navigation@1"
+        },
+        {
+          "command": "jiraPlay.refresh",
+          "when": "view == jiraPlay.home && jiraPlay.connected",
+          "group": "navigation@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "jiraPlay.openIssue",
+          "when": "false"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "jiraPlay.createIssueFromCode",
+          "when": "editorHasSelection",
+          "group": "jiraPlay@1"
+        }
+      ]
+    },
+    "walkthroughs": [
+      {
+        "id": "jiraPlay.gettingStarted",
+        "title": "Get started with JiraPlay",
+        "description": "Turn your team's Jira issues into a game in a few minutes.",
+        "steps": [
+          {
+            "id": "openBoard",
+            "title": "Open the board",
+            "description": "See your team as a party of heroes. It starts on demo data.\n[Open Board](command:jiraPlay.openBoard)",
+            "media": {
+              "markdown": "media/walkthrough/open-board.md"
+            },
+            "completionEvents": [
+              "onCommand:jiraPlay.openBoard"
+            ]
+          },
+          {
+            "id": "connect",
+            "title": "Connect your Jira account",
+            "description": "Bring in your team's real issues. Your token stays in the system keychain.\n[Connect Jira](command:jiraPlay.signIn)",
+            "media": {
+              "markdown": "media/walkthrough/connect.md"
+            },
+            "completionEvents": [
+              "onContext:jiraPlay.connected"
+            ]
+          },
+          {
+            "id": "theme",
+            "title": "Pick a theme",
+            "description": "Choose a world, including a light one.\n[Choose a theme](command:workbench.action.openSettings?%5B%22jiraPlay.theme%22%5D)",
+            "media": {
+              "markdown": "media/walkthrough/theme.md"
+            },
+            "completionEvents": [
+              "onSettingChanged:jiraPlay.theme"
+            ]
+          },
+          {
+            "id": "play",
+            "title": "Finish issues and beat the boss",
+            "description": "Earn XP, keep a streak and track it all from the sidebar.\n[Show the JiraPlay sidebar](command:jiraPlay.home.focus)",
+            "media": {
+              "markdown": "media/walkthrough/play.md"
+            },
+            "completionEvents": [
+              "onView:jiraPlay.home"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web -c magenta,cyan \"tsx watch --clear-screen=false server/index.ts\" \"vite\"",
+    "build": "npm run typecheck && vite build",
+    "build:extension": "esbuild extension/extension.ts --bundle --platform=node --format=cjs --target=node18 --external:vscode --outfile=dist-extension/extension.cjs",
+    "package": "npm run build && npm run build:extension && node scripts/package-extension.mjs",
+    "typecheck": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json && tsc -p tsconfig.extension.json",
+    "lint": "oxlint",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "check": "npm run typecheck && npm run lint && npm run test"
+  },
+  "dependencies": {
+    "@fontsource/anton": "^5.3.0",
+    "@fontsource/chakra-petch": "^5.3.0",
+    "@fontsource/cinzel": "^5.3.0",
+    "@fontsource/crimson-pro": "^5.3.0",
+    "@fontsource/orbitron": "^5.3.0",
+    "@fontsource/pixelify-sans": "^5.3.0",
+    "@fontsource/press-start-2p": "^5.3.0",
+    "@fontsource/racing-sans-one": "^5.3.0",
+    "@fontsource/rubik": "^5.3.0",
+    "@fontsource/silkscreen": "^5.3.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "motion": "^13.2.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.5.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/vscode": "^1.90.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/coverage-v8": "^5.0.1",
+    "@vscode/vsce": "^3.9.2",
+    "concurrently": "^10.0.5",
+    "esbuild": "^0.28.2",
+    "jsdom": "^29.1.1",
+    "oxlint": "^1.82.0",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.0"
+  },
+  "galleryBanner": {
+    "color": "#070b16",
+    "theme": "dark"
+  },
+  "pricing": "Free"
+}

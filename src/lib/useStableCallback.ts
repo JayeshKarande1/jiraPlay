@@ -1,0 +1,13 @@
+import { useCallback, useLayoutEffect, useRef } from 'react';
+
+/**
+ * A function whose identity never changes but always calls the latest `fn`. Passing these to memoised children
+ * keeps them from re-rendering just because a handler closed over newer state.
+ */
+export function useStableCallback<A extends unknown[], R>(fn: (...args: A) => R): (...args: A) => R {
+  const latest = useRef(fn);
+  useLayoutEffect(() => {
+    latest.current = fn;
+  });
+  return useCallback((...args: A) => latest.current(...args), []);
+}

@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-extension
+*.vsix
+*.zip
+docs/user-guide/*.pdf
+.DS_Store
+.env
+.env.*
+!.env.example
+.jiraplay-ledger.json
+.jiraplay-views.json

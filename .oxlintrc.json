@@ -1,0 +1,90 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "oxc", "import"],
+  "categories": {
+    "correctness": "error"
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2024": true
+  },
+  "ignorePatterns": ["dist/**", "dist-extension/**", "node_modules/**", "docs/**"],
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
+    "react/set-state-in-effect": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["src/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              { "name": "vscode", "message": "The board UI runs in a browser or webview; talk to the extension through src/api.ts." },
+              { "name": "express", "message": "The board UI can't use server libraries." },
+              { "name": "dotenv", "message": "The board UI can't read .env." }
+            ],
+            "patterns": [
+              { "group": ["**/server/**", "**/extension/**"], "message": "The board UI can't import server or extension code. Move shared logic to shared/." },
+              { "group": ["node:*"], "message": "The board UI runs in a browser; Node modules aren't available." }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["shared/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              { "name": "react", "message": "shared/ is plain logic used by the UI, server and extension." },
+              { "name": "react-dom", "message": "shared/ is plain logic used by the UI, server and extension." },
+              { "name": "motion/react", "message": "shared/ is plain logic used by the UI, server and extension." },
+              { "name": "vscode", "message": "shared/ is plain logic used by the UI, server and extension." }
+            ],
+            "patterns": [
+              { "group": ["**/src/**", "**/server/**", "**/extension/**"], "message": "shared/ can't depend on the UI, server or extension." },
+              { "group": ["node:*"], "message": "shared/ also runs in the browser; Node modules aren't available." }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["server/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              { "name": "vscode", "message": "server/ is also used by the web app, where vscode doesn't exist." },
+              { "name": "react", "message": "server/ has no UI." },
+              { "name": "react-dom", "message": "server/ has no UI." }
+            ],
+            "patterns": [{ "group": ["**/src/**", "**/extension/**"], "message": "server/ can only import shared/, not UI or extension code." }]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["extension/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              { "name": "react", "message": "The extension host has no React; the UI lives in src/." },
+              { "name": "react-dom", "message": "The extension host has no React; the UI lives in src/." }
+            ],
+            "patterns": [{ "group": ["**/src/**"], "message": "The extension can import server/ and shared/, not UI code." }]
+          }
+        ]
+      }
+    }
+  ]
+}

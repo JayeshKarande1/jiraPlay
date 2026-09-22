@@ -1,0 +1,620 @@
+@import "tailwindcss";
+
+@theme {
+  --font-pixel: "Press Start 2P", ui-monospace, monospace;
+  --font-sans: "Rubik", ui-sans-serif, system-ui, sans-serif;
+
+  /*
+   * Type scale for the small display labels. Pixel fonts are drawn on a grid, so these steps are exact pixels
+   * rather than rems. Use text-pixel-* and text-meta instead of arbitrary sizes like text-[9px].
+   */
+  --text-pixel-xs: 8px; /* badges, tags, legends */
+  --text-pixel-sm: 9px; /* section labels, buttons */
+  --text-pixel-md: 10px; /* primary pixel buttons */
+  --text-meta: 11px; /* secondary sans text under list rows */
+}
+
+/*
+ * Issue-type and status colours. Components read them through KINDS and STAGES (shared/kinds.ts, shared/stages.ts);
+ * each theme below can re-point them to fit its palette.
+ */
+:root {
+  --kind-story: #fbbf24;
+  --kind-task: #60a5fa;
+  --kind-bug: #f87171;
+  --kind-epic: #c084fc;
+  --kind-subtask: #34d399;
+  --stage-todo: #94a3b8;
+  --stage-doing: #38bdf8;
+  --stage-done: #4ade80;
+  --done-mark: #34d399;
+  /*
+   * The corner scale. Themes that redefine it (cyber, blocky) must set every step: a missing one falls back to
+   * Tailwind's default, which is how rounded-sm ended up larger than rounded-md.
+   */
+  --radius-sm: 2px;
+  /* Where a status column's tint fades to. */
+  --column-fade: rgba(2, 6, 23, 0.75);
+  /* The gaps that cut XP and HP bars into segments. */
+  --segment-gap: rgba(7, 11, 22, 0.9);
+}
+
+body {
+  margin: 0;
+  /* VS Code webviews add their own body padding. */
+  padding: 0;
+  background: var(--arena-base, #070b16);
+  color: var(--color-slate-200);
+  font-size-adjust: var(--sans-size-adjust, none);
+}
+
+/*
+ * Themes: the components use Tailwind's slate (surfaces and text) and amber (accent) colors, so each theme
+ * re-points those palette variables instead of changing classes. Display fonts are scaled to a similar
+ * cap height as Press Start 2P, which the tiny text sizes were designed for.
+ */
+/*
+ * One focus ring for the whole app. Each theme re-points --color-amber-400, so the ring follows the accent,
+ * including daylight's darker one. :where() keeps specificity at 0, so a component can still override it.
+ */
+:root {
+  --focus-ring: var(--color-amber-400);
+}
+
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.font-pixel {
+  font-size-adjust: var(--pixel-size-adjust, none);
+  letter-spacing: var(--pixel-tracking, normal);
+}
+
+.bg-arena {
+  background-image:
+    radial-gradient(ellipse at top, rgba(99, 102, 241, 0.22), transparent 60%),
+    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+  background-size: 100% 100%, 32px 32px, 32px 32px;
+}
+
+/* The sprint name. */
+.theme-title {
+  text-shadow: 0 0 24px rgba(251, 191, 36, 0.35), 0 4px 0 #92400e;
+}
+
+/* ---------- Space Fleet ---------- */
+[data-theme="space"] {
+  --arena-base: #050816;
+  --font-pixel: "Orbitron", ui-sans-serif, sans-serif;
+  --pixel-size-adjust: cap-height 0.9;
+  --pixel-tracking: 0.08em;
+  --color-slate-100: #eef1fb;
+  --color-slate-200: #d6dcf3;
+  --color-slate-300: #b4bde3;
+  --color-slate-400: #8a95c9;
+  --color-slate-500: #5c68a8;
+  --color-slate-600: #3b4585;
+  --color-slate-700: #252d63;
+  --color-slate-800: #151b45;
+  --color-slate-900: #0b1030;
+  --color-slate-950: #050816;
+  --color-amber-200: #a5f3fc;
+  --color-amber-300: #67e8f9;
+  --color-amber-400: #22d3ee;
+  --color-amber-500: #06b6d4;
+  --kind-story: #67e8f9;
+  --kind-task: #a5b4fc;
+  --kind-bug: #f472b6;
+  --kind-epic: #c4b5fd;
+  --kind-subtask: #5eead4;
+  --stage-todo: #8a95c9;
+  --stage-doing: #22d3ee;
+  --stage-done: #a3e635;
+  --done-mark: #a3e635;
+}
+
+[data-theme="space"] .bg-arena {
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+    radial-gradient(1px 1px at 120px 80px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1.5px 1.5px at 200px 160px, #c7d2fe, transparent),
+    radial-gradient(1px 1px at 60px 190px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(2px 2px at 260px 40px, #e0f2fe, transparent),
+    radial-gradient(ellipse at 85% -10%, rgba(139, 92, 246, 0.35), transparent 55%),
+    radial-gradient(ellipse at 0% 110%, rgba(34, 211, 238, 0.18), transparent 50%);
+  background-size: 300px 220px, 300px 220px, 300px 220px, 300px 220px, 300px 220px, 100% 100%, 100% 100%;
+}
+
+[data-theme="space"] .theme-title {
+  text-shadow: 0 0 18px rgba(34, 211, 238, 0.55), 0 0 42px rgba(99, 102, 241, 0.45);
+}
+
+/* ---------- Heist City ---------- */
+[data-theme="heist"] {
+  --arena-base: #0a0d0a;
+  --font-pixel: "Anton", ui-sans-serif, sans-serif;
+  --pixel-size-adjust: cap-height 1.05;
+  --pixel-tracking: 0.06em;
+  --color-slate-100: #eef2ec;
+  --color-slate-200: #dfe5dc;
+  --color-slate-300: #c2ccbe;
+  --color-slate-400: #98a693;
+  --color-slate-500: #6b7a67;
+  --color-slate-600: #4a5747;
+  --color-slate-700: #313c2f;
+  --color-slate-800: #1f271e;
+  --color-slate-900: #131812;
+  --color-slate-950: #0a0d0a;
+  --color-amber-200: #bbf7a8;
+  --color-amber-300: #8ee06f;
+  --color-amber-400: #5fbf3f;
+  --color-amber-500: #3f9a2a;
+  --kind-story: #fbbf24;
+  --kind-task: #7dd3fc;
+  --kind-bug: #fb7185;
+  --kind-epic: #e879f9;
+  --kind-subtask: #8ee06f;
+  --stage-todo: #98a693;
+  --stage-doing: #ff7a3c;
+  --stage-done: #5fbf3f;
+  --done-mark: #5fbf3f;
+}
+
+[data-theme="heist"] .bg-arena {
+  background-image:
+    radial-gradient(ellipse 120% 60% at 50% 0%, rgba(255, 122, 60, 0.35), rgba(200, 50, 120, 0.18) 45%, transparent 70%),
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 14px);
+  background-size: 100% 100%, auto;
+}
+
+[data-theme="heist"] .theme-title {
+  text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 0 30px rgba(255, 122, 60, 0.5);
+}
+
+/* ---------- Wizard School ---------- */
+[data-theme="wizard"] {
+  --arena-base: #0d0b14;
+  --font-pixel: "Cinzel", ui-serif, serif;
+  --font-sans: "Crimson Pro", ui-serif, Georgia, serif;
+  --pixel-size-adjust: cap-height 0.95;
+  --pixel-tracking: 0.06em;
+  --sans-size-adjust: ex-height 0.52;
+  --color-slate-100: #f3eef8;
+  --color-slate-200: #e6dcef;
+  --color-slate-300: #c9bdd6;
+  --color-slate-400: #a293b3;
+  --color-slate-500: #75658a;
+  --color-slate-600: #4f4163;
+  --color-slate-700: #372c47;
+  --color-slate-800: #251e31;
+  --color-slate-900: #17131f;
+  --color-slate-950: #0d0b14;
+  --color-amber-200: #fde9a9;
+  --color-amber-300: #f5cf66;
+  --color-amber-400: #e3b341;
+  --color-amber-500: #c4912a;
+  --kind-story: #f5cf66;
+  --kind-task: #93c5fd;
+  --kind-bug: #fb7185;
+  --kind-epic: #c4b5fd;
+  --kind-subtask: #2dd4bf;
+  --stage-todo: #a293b3;
+  --stage-doing: #a78bfa;
+  --stage-done: #86efac;
+  --done-mark: #86efac;
+}
+
+[data-theme="wizard"] .bg-arena {
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(245, 207, 102, 0.16), transparent 22%),
+    radial-gradient(circle at 88% 12%, rgba(245, 207, 102, 0.12), transparent 20%),
+    radial-gradient(ellipse at top, rgba(124, 58, 237, 0.22), transparent 60%),
+    radial-gradient(1px 1px at 40px 60px, rgba(253, 233, 169, 0.7), transparent),
+    radial-gradient(1px 1px at 180px 140px, rgba(253, 233, 169, 0.5), transparent);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 240px 200px, 240px 200px;
+}
+
+[data-theme="wizard"] .theme-title {
+  background: linear-gradient(180deg, #fff3c4, #e3b341 55%, #9a6b1c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 2px 0 #3b2a10) drop-shadow(0 0 18px rgba(227, 179, 65, 0.35));
+}
+
+/* ---------- Neon Cyber ---------- */
+[data-theme="cyber"] {
+  --arena-base: #05060a;
+  --font-pixel: "Chakra Petch", ui-sans-serif, sans-serif;
+  --font-sans: "Chakra Petch", ui-sans-serif, sans-serif;
+  --pixel-size-adjust: cap-height 0.95;
+  --pixel-tracking: 0.1em;
+  --radius-sm: 1px;
+  --radius-md: 2px;
+  --radius-lg: 3px;
+  --radius-xl: 4px;
+  --radius-2xl: 6px;
+  --color-slate-100: #eef2f8;
+  --color-slate-200: #dde3ef;
+  --color-slate-300: #b9c2d6;
+  --color-slate-400: #8a94ad;
+  --color-slate-500: #56607a;
+  --color-slate-600: #353d52;
+  --color-slate-700: #222838;
+  --color-slate-800: #141824;
+  --color-slate-900: #0b0d14;
+  --color-slate-950: #05060a;
+  --color-amber-200: #fff9a0;
+  --color-amber-300: #fcee0a;
+  --color-amber-400: #e5d600;
+  --color-amber-500: #bfb200;
+  --kind-story: #fcee0a;
+  --kind-task: #00f0ff;
+  --kind-bug: #ff2a6d;
+  --kind-epic: #e879f9;
+  --kind-subtask: #4ade80;
+  --stage-todo: #8a94ad;
+  --stage-doing: #00f0ff;
+  --stage-done: #39ff14;
+  --done-mark: #39ff14;
+}
+
+[data-theme="cyber"] .bg-arena {
+  background-image:
+    radial-gradient(ellipse at top, rgba(255, 42, 109, 0.22), transparent 55%),
+    radial-gradient(ellipse at bottom right, rgba(0, 240, 255, 0.14), transparent 50%),
+    linear-gradient(rgba(0, 240, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 42, 109, 0.06) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+}
+
+/* Scanlines over the whole screen. */
+[data-theme="cyber"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.18) 0 1px, transparent 1px 3px);
+}
+
+[data-theme="cyber"] .theme-title {
+  color: #fcee0a;
+  text-shadow: 2px 0 #00f0ff, -2px 0 #ff2a6d;
+  animation: cyber-glitch 6s steps(1) infinite;
+}
+
+@keyframes cyber-glitch {
+  0%,
+  92%,
+  98%,
+  100% {
+    text-shadow: 2px 0 #00f0ff, -2px 0 #ff2a6d;
+    translate: none;
+  }
+  94% {
+    text-shadow: -3px 0 #00f0ff, 3px 0 #ff2a6d;
+    translate: 3px 0;
+  }
+  96% {
+    text-shadow: 3px 0 #00f0ff, -3px 0 #ff2a6d;
+    translate: -2px 0;
+  }
+}
+
+/* ---------- Block World ---------- */
+[data-theme="blocky"] {
+  --arena-base: #2a211b;
+  --font-pixel: "Silkscreen", ui-monospace, monospace;
+  --font-sans: "Pixelify Sans", ui-sans-serif, sans-serif;
+  --pixel-size-adjust: cap-height 1;
+  --pixel-tracking: 0.04em;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --color-slate-100: #f5f1ec;
+  --color-slate-200: #ebe5de;
+  --color-slate-300: #d2c8bc;
+  --color-slate-400: #b3a595;
+  --color-slate-500: #8f7e6d;
+  --color-slate-600: #6f5e4f;
+  --color-slate-700: #54463a;
+  --color-slate-800: #3b3027;
+  --color-slate-900: #2a211b;
+  --color-slate-950: #1b1512;
+  --color-amber-200: #d9ff9e;
+  --color-amber-300: #b6f55a;
+  --color-amber-400: #8fd631;
+  --color-amber-500: #6aa91f;
+  --kind-story: #facc15;
+  --kind-task: #60a5fa;
+  --kind-bug: #ef4444;
+  --kind-epic: #c084fc;
+  --kind-subtask: #8fd631;
+  --stage-todo: #b3a595;
+  --stage-doing: #60a5fa;
+  --stage-done: #8fd631;
+  --done-mark: #8fd631;
+}
+
+/* A grass strip on top of dirt blocks. */
+[data-theme="blocky"] .bg-arena {
+  background-image:
+    linear-gradient(180deg, #5d9c3a 0 28px, #4a7d2e 28px 36px, transparent 36px),
+    conic-gradient(#3b2e24 25%, #33271f 0 50%, #3b2e24 0 75%, #33271f 0);
+  background-size: 100% 100%, 32px 32px;
+  background-repeat: no-repeat, repeat;
+}
+
+[data-theme="blocky"] .theme-title {
+  color: #fff;
+  text-shadow: 4px 4px 0 #3f3f3f;
+}
+
+/* ---------- Grand Prix ---------- */
+[data-theme="racing"] {
+  --arena-base: #111214;
+  --font-pixel: "Racing Sans One", ui-sans-serif, sans-serif;
+  --pixel-size-adjust: cap-height 1;
+  --pixel-tracking: 0.05em;
+  --color-slate-100: #f4f4f5;
+  --color-slate-200: #e4e4e7;
+  --color-slate-300: #c8c8ce;
+  --color-slate-400: #9d9da6;
+  --color-slate-500: #6f6f78;
+  --color-slate-600: #4c4c54;
+  --color-slate-700: #36363c;
+  --color-slate-800: #232327;
+  --color-slate-900: #18181b;
+  --color-slate-950: #0e0e10;
+  --color-amber-200: #ffb38a;
+  --color-amber-300: #ff8a4c;
+  --color-amber-400: #ff5a1f;
+  --color-amber-500: #e03e0a;
+  --kind-story: #ffb38a;
+  --kind-task: #93c5fd;
+  --kind-bug: #ff5a1f;
+  --kind-epic: #fde047;
+  --kind-subtask: #4ade80;
+  --stage-todo: #9d9da6;
+  --stage-doing: #ff8a4c;
+  --stage-done: #4ade80;
+  --done-mark: #4ade80;
+}
+
+/* A chequered strip along the top, speed streaks and carbon fibre weave. */
+[data-theme="racing"] .bg-arena {
+  background-image:
+    conic-gradient(#f4f4f5 25%, #111214 0 50%, #f4f4f5 0 75%, #111214 0),
+    linear-gradient(180deg, transparent 24px, rgba(255, 90, 31, 0.9) 24px 28px, transparent 28px),
+    radial-gradient(ellipse at 50% 0%, rgba(255, 90, 31, 0.2), transparent 55%),
+    repeating-linear-gradient(-20deg, rgba(255, 255, 255, 0.035) 0 2px, transparent 2px 90px),
+    repeating-linear-gradient(45deg, #1a1b1e 0 4px, #141517 4px 8px);
+  background-size: 24px 24px, 100% 100%, 100% 100%, auto, auto;
+  background-repeat: repeat-x, no-repeat, no-repeat, repeat, repeat;
+}
+
+[data-theme="racing"] .theme-title {
+  font-style: italic;
+  text-shadow: 3px 3px 0 #e03e0a, 6px 6px 0 rgba(0, 0, 0, 0.6);
+}
+
+/* Cuts a solid bar into pixel-style segments. */
+.xp-segments {
+  background-image: repeating-linear-gradient(90deg, transparent 0 10px, var(--segment-gap) 10px 12px);
+}
+
+/* Status columns (To Do / In Progress / Done). Each column sets its color in --stage. */
+.stage-column {
+  --stage: #94a3b8;
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--stage) 40%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--stage) 14%, transparent), var(--column-fade) 160px);
+}
+
+.stage-header {
+  color: var(--stage);
+}
+
+.stage-bar {
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--stage);
+}
+
+.stage-icon {
+  display: inline-block;
+}
+
+/* To Do: waiting, so it breathes slowly. */
+.stage-todo {
+  animation: stage-breathe 3.5s ease-in-out infinite;
+}
+
+@keyframes stage-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 32px -8px color-mix(in srgb, var(--stage) 60%, transparent);
+  }
+}
+
+/* In Progress: always moving, with a beam circling the border, marching stripes and a swinging sword. */
+@property --beam-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.stage-doing {
+  box-shadow: 0 0 36px -12px var(--stage);
+}
+
+.stage-doing::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 2px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--beam-angle), transparent 0 70%, var(--stage) 88%, transparent);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: beam-spin 3s linear infinite;
+}
+
+@keyframes beam-spin {
+  to {
+    --beam-angle: 360deg;
+  }
+}
+
+/* The stripe tile is one horizontal period of a 16px stripe at 45°, so the loop is seamless. */
+.stage-doing .stage-bar {
+  background: repeating-linear-gradient(-45deg, var(--stage) 0 8px, color-mix(in srgb, var(--stage) 30%, transparent) 8px 16px);
+  background-size: 22.63px 22.63px;
+  animation: stripes-march 0.8s linear infinite;
+}
+
+@keyframes stripes-march {
+  to {
+    background-position: 22.63px 0;
+  }
+}
+
+.stage-doing .stage-icon {
+  transform-origin: 50% 80%;
+  animation: icon-swing 1.2s ease-in-out infinite;
+}
+
+@keyframes icon-swing {
+  0%,
+  100% {
+    transform: rotate(-14deg);
+  }
+  50% {
+    transform: rotate(14deg);
+  }
+}
+
+/* Done: a shine sweeps across now and then, and the trophy floats. */
+.stage-done .stage-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+.stage-done .stage-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+  transform: translateX(-100%);
+  animation: stage-shine 3.5s ease-in-out infinite;
+}
+
+@keyframes stage-shine {
+  0%,
+  60% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.stage-done .stage-icon {
+  animation: icon-float 2.4s ease-in-out infinite;
+}
+
+@keyframes icon-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-column,
+  .stage-column::before,
+  .stage-column *,
+  .stage-column *::after,
+  .theme-title,
+  /* Tailwind's utilities run on their own keyframes, so MotionConfig's reducedMotion doesn't reach them. */
+  .animate-pulse,
+  .animate-bounce {
+    animation: none !important;
+  }
+}
+
+/*
+ * ---------- Daylight (light mode) ----------
+ * The components are written for dark surfaces, so light mode flips the slate scale: slate-950 surfaces become
+ * white and slate-100 text becomes near-black. White headings, the accent and the status tints are re-pointed
+ * to darker shades that keep text contrast at WCAG AA on the light ground.
+ */
+[data-theme="daylight"] {
+  color-scheme: light;
+  --arena-base: #eef2f7;
+  --color-white: #0b1220;
+  --color-slate-100: #0f172a;
+  --color-slate-200: #1e293b;
+  --color-slate-300: #334155;
+  --color-slate-400: #475569;
+  --color-slate-500: #64748b;
+  --color-slate-600: #94a3b8;
+  --color-slate-700: #cbd5e1;
+  --color-slate-800: #e2e8f0;
+  --color-slate-900: #f1f5f9;
+  --color-slate-950: #ffffff;
+  --color-amber-200: #78350f;
+  --color-amber-300: #b45309;
+  --color-amber-400: #d97706;
+  --color-amber-500: #f59e0b;
+  --color-rose-100: #881337;
+  --color-rose-200: #9f1239;
+  --color-rose-300: #be123c;
+  --color-rose-400: #e11d48;
+  --color-rose-950: #ffe4e6;
+  --color-emerald-100: #064e3b;
+  --color-emerald-200: #065f46;
+  --color-emerald-300: #047857;
+  --color-emerald-400: #059669;
+  --color-emerald-950: #d1fae5;
+  --kind-story: #b45309;
+  --kind-task: #1d4ed8;
+  --kind-bug: #b91c1c;
+  --kind-epic: #7e22ce;
+  --kind-subtask: #047857;
+  --stage-todo: #475569;
+  --stage-doing: #0369a1;
+  --stage-done: #15803d;
+  --done-mark: #16a34a;
+  --column-fade: rgba(255, 255, 255, 0.9);
+  --segment-gap: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="daylight"] .bg-arena {
+  background-image:
+    radial-gradient(ellipse at top, rgba(251, 191, 36, 0.28), transparent 60%),
+    linear-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+  background-size: 100% 100%, 32px 32px, 32px 32px;
+}
+
+[data-theme="daylight"] .theme-title {
+  text-shadow: 0 3px 0 #fcd34d;
+}

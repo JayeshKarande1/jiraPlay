@@ -1,0 +1,9 @@
+{
+  // The VS Code extension host: Node plus the vscode API, and the stores it shares with the server.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": ["node", "vscode"]
+  },
+  "include": ["extension", "server", "shared"]
+}
