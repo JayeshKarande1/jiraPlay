@@ -28,7 +28,7 @@ export function Roster({ members, activeId, highlightedId, meId, totalQuests, on
 
   return (
     <aside className="border-b border-slate-800 bg-slate-950/70 backdrop-blur lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-72 lg:shrink-0 lg:flex-col lg:border-b-0 lg:border-r">
-      <div className="flex items-baseline justify-between gap-4 px-5 pt-5 lg:block">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 pt-4 lg:block lg:px-5 lg:pt-5">
         <p className="flex items-center gap-2.5 font-pixel text-base text-white">
           <img src={logoMark} alt="" width={36} height={36} className="size-9 shrink-0 rounded-md" />
           <span>
@@ -40,12 +40,12 @@ export function Roster({ members, activeId, highlightedId, meId, totalQuests, on
         </p>
       </div>
 
-      <nav aria-label="Party" className="flex gap-2 overflow-x-auto px-3 py-4 lg:flex-1 lg:flex-col lg:overflow-y-auto">
+      <nav aria-label="Party" className="flex snap-x gap-2 overflow-x-auto px-3 py-3 lg:flex-1 lg:flex-col lg:overflow-y-auto lg:py-4">
         <button
           type="button"
           onClick={() => onView(null)}
           aria-current={activeId === null ? 'page' : undefined}
-          className={`flex w-56 shrink-0 items-center gap-3 rounded-xl border-2 p-2 text-left transition-colors lg:w-auto ${
+          className={`flex w-48 shrink-0 snap-start items-center gap-3 rounded-xl border-2 p-2 text-left transition-colors sm:w-56 lg:w-auto ${
             activeId === null ? 'border-amber-400 bg-slate-800/80' : 'border-transparent hover:bg-slate-900'
           }`}
         >
@@ -170,7 +170,7 @@ const RosterRow = memo(
       onClick={() => onView(hero.id)}
       {...handlers}
       aria-current={active ? 'page' : undefined}
-      className={`flex w-56 shrink-0 items-center gap-3 rounded-xl border-2 p-2 text-left transition-colors lg:w-auto ${
+      className={`flex w-48 shrink-0 snap-start items-center gap-3 rounded-xl border-2 p-2 text-left transition-colors sm:w-56 lg:w-auto ${
         active || hover ? 'bg-slate-800/80' : 'hover:bg-slate-900'
       }`}
       style={{ borderColor: active || hover ? cls.color : highlighted ? `${cls.color}66` : 'transparent' }}
@@ -197,7 +197,7 @@ const RosterRow = memo(
         )}
         <span className="mt-1 block text-meta text-slate-400">
           {theme.stageIcons.doing} {open} open · ✔ {quests.length - open} done
-          {streak >= 2 && ` · 🔥${streak}`}
+          {streak >= 2 && ` · ${theme.uiIcons.streak}${streak}`}
         </span>
       </span>
     </button>

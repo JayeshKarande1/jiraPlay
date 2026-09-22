@@ -1,22 +1,35 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { Quest, Sprint } from '../../shared/types';
-import { bossState } from '../../shared/boss';
+import { bossState, lastBlow } from '../../shared/boss';
 import { useTheme } from '../lib/activeTheme';
 
 /** The last blow, so the boss flinches and shows the damage. */
 export interface BossHit {
   nonce: number;
   damage: number;
+  /** Who landed it. */
+  by?: string;
+}
+
+interface Props {
+  quests: Quest[];
+  sprint: Sprint | null;
+  hit?: BossHit;
+  /** Names for the assignees of the issues, for the last-blow credit. */
+  nameOf?: (assigneeId: string | null) => string | undefined;
 }
 
 /** The sprint as a boss fight: the HP bar is the sprint's open work, and finishing issues deals damage. */
-export function BossFight({ quests, sprint, hit }: { quests: Quest[]; sprint: Sprint | null; hit?: BossHit }) {
+export function BossFight({ quests, sprint, hit, nameOf }: Props) {
   const theme = useTheme();
   const reduced = useReducedMotion();
   const boss = bossState(quests, sprint);
   const ratio = boss.maxHp ? boss.hp / boss.maxHp : 0;
   const cleared = quests.filter((q) => q.done).length;
   const status = boss.defeated ? 'DEFEATED' : boss.enraged ? 'ENRAGED' : null;
+  /* The credit: this session's latest hit, else the latest resolution date Jira knows about. */
+  const blow = lastBlow(quests);
+  const credit = hit?.by ? { name: hit.by, xp: hit.damage } : blow ? { name: nameOf?.(blow.assigneeId) ?? (blow.assigneeId ? 'Someone' : 'Unassigned'), xp: blow.xp } : null;
 
   return (
     <section aria-label="Sprint boss" className="relative mt-5 max-w-2xl rounded-xl border border-slate-700 bg-slate-950/60 p-3">
@@ -73,6 +86,11 @@ export function BossFight({ quests, sprint, hit }: { quests: Quest[]; sprint: Sp
               {cleared}/{quests.length} DONE{boss.elapsed !== null && ` · SPRINT ${Math.round(boss.elapsed * 100)}% OVER`}
             </span>
           </div>
+          {credit && (
+            <p className="mt-1 truncate font-pixel text-pixel-xs text-slate-400">
+              {boss.defeated ? 'FINAL BLOW' : 'LAST HIT'}: <span className="text-slate-200">{credit.name}</span> <span className="text-rose-300">−{credit.xp}</span>
+            </p>
+          )}
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { daysBetween, daySeries, kindMix, sprintRange, sprintRecap, weekSeries, weekStart } from './recap';
+import { daysBetween, daySeries, kindMix, levelMilestones, personalBests, sprintRange, sprintRecap, weekSeries, weekStart } from './recap';
 import { makeQuest } from './testing';
 import type { QuestKind, Sprint, XpEntry } from './types';
 
@@ -180,5 +180,50 @@ describe('kindMix', () => {
 
   it('is empty for someone with no finished work', () => {
     expect(kindMix([entry('2026-03-02')], 'nobody')).toEqual([]);
+  });
+});
+
+describe('levelMilestones', () => {
+  it('lists every level reached, in order, with the issue that reached it', () => {
+    // Level 2 needs 10 XP, level 3 needs 40, level 4 needs 90.
+    const ledger = [
+      entry('2026-03-04', { key: 'A-2', xp: 30 }),
+      entry('2026-03-02', { key: 'A-1', xp: 10 }),
+      entry('2026-03-09', { key: 'A-3', xp: 50 }),
+      entry('2026-03-03', { key: 'B-1', xp: 500, heroId: 'b' }),
+    ];
+    expect(levelMilestones(ledger, 'a')).toEqual([
+      { level: 2, day: '2026-03-02', key: 'A-1' },
+      { level: 3, day: '2026-03-04', key: 'A-2' },
+      { level: 4, day: '2026-03-09', key: 'A-3' },
+    ]);
+  });
+
+  it('gives a skipped level its own line', () => {
+    expect(levelMilestones([entry('2026-03-02', { xp: 50 })], 'a').map((m) => m.level)).toEqual([2, 3]);
+    expect(levelMilestones([], 'a')).toEqual([]);
+  });
+});
+
+describe('personalBests', () => {
+  it('finds the best day, best week and biggest issue for one hero', () => {
+    const ledger = [
+      entry('2026-03-02', { key: 'A-1', xp: 10 }),
+      entry('2026-03-02', { key: 'A-2', xp: 30 }),
+      entry('2026-03-11', { key: 'A-3', xp: 35 }),
+      entry('2026-03-03', { key: 'B-1', xp: 500, heroId: 'b' }),
+    ];
+    expect(personalBests(ledger, 'a')).toEqual({
+      completed: 3,
+      xp: 75,
+      bestDay: { day: '2026-03-02', xp: 40, completed: 2 },
+      bestWeek: { weekStart: '2026-03-02', xp: 40, completed: 2 },
+      biggest: { key: 'A-3', xp: 35 },
+      firstDay: '2026-03-02',
+    });
+  });
+
+  it('is empty for a hero with no finished work', () => {
+    expect(personalBests([], 'a')).toEqual({ completed: 0, xp: 0, bestDay: null, bestWeek: null, biggest: null, firstDay: null });
   });
 });

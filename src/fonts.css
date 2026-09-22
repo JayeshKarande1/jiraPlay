@@ -122,6 +122,15 @@
   src: url("../node_modules/@fontsource/pixelify-sans/files/pixelify-sans-latin-600-normal.woff2") format("woff2");
 }
 
+/* Noir */
+@font-face {
+  font-family: "Special Elite";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../node_modules/@fontsource/special-elite/files/special-elite-latin-400-normal.woff2") format("woff2");
+}
+
 /* Grand Prix */
 @font-face {
   font-family: "Racing Sans One";

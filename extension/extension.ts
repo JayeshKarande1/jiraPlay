@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { parseAvatarChoice } from '../shared/avatar';
 import { withProgress } from '../shared/ledger';
 import type { Board, SetupInfo, SetupResult, XpEntry } from '../shared/types';
-import { DEFAULT_THEME, isThemeId, type ThemeId } from '../shared/themes';
+import { DEFAULT_THEME, isThemePref, resolveThemePref, type ThemeId, type ThemePref } from '../shared/themes';
 import { heroStats } from '../shared/xp';
 import { createJiraStore, isAllowedJiraHost, isValidAllowedHost, parseSetupInput, verifyJiraSetup, type JiraConfig } from '../server/jira';
 import { createMockStore } from '../server/mock';
@@ -92,7 +92,7 @@ class JiraPlay implements vscode.Disposable {
   private readonly sidebarChanged = new vscode.EventEmitter<void>();
   private readonly sidebar: vscode.TreeDataProvider<SidebarNode> = {
     onDidChangeTreeData: this.sidebarChanged.event,
-    getChildren: (node) => node?.children ?? (node ? [] : sidebarModel(this.lastBoard, themeSetting())),
+    getChildren: (node) => node?.children ?? (node ? [] : sidebarModel(this.lastBoard, currentTheme())),
     getTreeItem: (node) => treeItem(node),
   };
   private lastBoardAt = 0;
@@ -126,6 +126,10 @@ class JiraPlay implements vscode.Disposable {
         } else if (e.affectsConfiguration('jiraPlay')) {
           this.reset();
         }
+      }),
+      // With the theme set to `system`, the sidebar's wording follows the editor's colour theme; the board watches <body> itself.
+      vscode.window.onDidChangeActiveColorTheme(() => {
+        if (themeSetting() === 'system') this.sidebarChanged.fire();
       }),
       context.secrets.onDidChange((e) => {
         if (e.key === TOKEN_KEY) this.reset();
@@ -163,7 +167,7 @@ class JiraPlay implements vscode.Disposable {
     }
     const distUri = vscode.Uri.joinPath(this.context.extensionUri, 'dist');
     panel.webview.options = { enableScripts: true, localResourceRoots: [distUri] };
-    panel.webview.html = boardHtml(panel.webview, distUri, themeSetting());
+    panel.webview.html = boardHtml(panel.webview, distUri);
     const listener = panel.webview.onDidReceiveMessage((message) =>
       fireAndForget(this.handleMessage(panel.webview, message), 'handling a message from the board'),
     );
@@ -429,7 +433,7 @@ class JiraPlay implements vscode.Disposable {
     }
 
     if (message.type === 'setTheme') {
-      if (isThemeId(message.theme)) fireAndForget(updateSetting('theme', message.theme), 'saving the theme');
+      if (isThemePref(message.theme)) fireAndForget(updateSetting('theme', message.theme), 'saving the theme');
       return;
     }
 
@@ -584,16 +588,23 @@ export function allowedHostsSetting(): string[] {
     .filter(isValidAllowedHost);
 }
 
-function themeSetting(): ThemeId {
+function themeSetting(): ThemePref {
   const value = vscode.workspace.getConfiguration('jiraPlay').get('theme');
-  return isThemeId(value) ? value : DEFAULT_THEME;
+  return isThemePref(value) ? value : DEFAULT_THEME;
+}
+
+/** The theme to show right now: the setting, or with `system` the one that fits the editor's colour theme. */
+function currentTheme(): ThemeId {
+  const { kind } = vscode.window.activeColorTheme;
+  const dark = kind !== vscode.ColorThemeKind.Light && kind !== vscode.ColorThemeKind.HighContrastLight;
+  return resolveThemePref(themeSetting(), dark);
 }
 
 /**
  * Builds the webview page from the Vite build, with a Content Security Policy that only allows the bundled files.
  * The theme goes on <html> so the board's first paint already uses it.
  */
-function boardHtml(webview: vscode.Webview, distUri: vscode.Uri, theme: ThemeId): string {
+function boardHtml(webview: vscode.Webview, distUri: vscode.Uri): string {
   let entry: BoardEntry | undefined;
   const manifestPath = vscode.Uri.joinPath(distUri, 'manifest.json').fsPath;
   try {
@@ -609,7 +620,8 @@ function boardHtml(webview: vscode.Webview, distUri: vscode.Uri, theme: ThemeId)
     entry,
     asset: (path) => webview.asWebviewUri(vscode.Uri.joinPath(distUri, path)).toString(),
     cspSource: webview.cspSource,
-    theme,
+    theme: currentTheme(),
+    themePref: themeSetting(),
     allowedHosts: allowedHostsSetting(),
     nonce: randomBytes(16).toString('base64'),
   });

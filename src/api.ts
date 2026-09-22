@@ -21,7 +21,7 @@ export interface ViewsInfo {
 }
 import { vscodeApi } from './lib/host';
 import { parseAvatarChoice, type AvatarChoice } from '../shared/avatar';
-import { isThemeId, type ThemeId } from '../shared/themes';
+import { isThemePref, type ThemePref } from '../shared/themes';
 
 interface BoardApi {
   board(): Promise<Board>;
@@ -100,7 +100,7 @@ const SLOW_METHODS = new Set(['getBoard', 'getMyCounts', 'getMyQuests', 'connect
 const pending = new Map<number, { resolve: (value: unknown) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }>();
 const refreshListeners = new Set<() => void>();
 const setupListeners = new Set<() => void>();
-const themeListeners = new Set<(id: ThemeId) => void>();
+const themeListeners = new Set<(pref: ThemePref) => void>();
 const openQuestListeners = new Set<(key: string) => void>();
 let nextRequestId = 1;
 
@@ -114,7 +114,7 @@ if (vscodeApi) {
     }
     if (message?.type === 'theme') {
       const { theme } = message;
-      if (isThemeId(theme)) themeListeners.forEach((listener) => listener(theme));
+      if (isThemePref(theme)) themeListeners.forEach((listener) => listener(theme));
       return;
     }
     if (message?.type === 'refresh') {
@@ -214,7 +214,7 @@ export function onOpenQuestRequest(listener: (key: string) => void): () => void 
 }
 
 /** Inside VS Code, the extension reports changes to the jiraPlay.theme setting. */
-export function onThemeChange(listener: (id: ThemeId) => void): () => void {
+export function onThemeChange(listener: (pref: ThemePref) => void): () => void {
   themeListeners.add(listener);
   return () => {
     themeListeners.delete(listener);

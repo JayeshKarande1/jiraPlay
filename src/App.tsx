@@ -17,7 +17,13 @@ import type { Burst } from './components/LevelUpBurst';
 import { ThemePicker } from './components/ThemePicker';
 import { ViewPicker } from './components/ViewPicker';
 import { BoardSkeleton } from './components/BoardSkeleton';
-import { BoardToolbar, type BoardGrouping } from './components/BoardToolbar';
+import { BoardToolbar, type BoardDensity, type BoardGrouping } from './components/BoardToolbar';
+import { CommandPalette, type PaletteCommand, type PalettePage } from './components/CommandPalette';
+import { BossOutcome, type BossOutcomeState } from './components/BossOutcome';
+import { bossState, lastBlow, sprintOver } from '../shared/boss';
+import { MEMBER_SORTS } from '../shared/boardFilter';
+import { THEME_LIST } from '../shared/themes';
+import { setTheme } from './lib/activeTheme';
 import { ColumnBoard } from './components/ColumnBoard';
 import { EMPTY_FILTER, filterQuests, isEmptyFilter, sortMembers, type MemberSort, type QuestFilter } from '../shared/boardFilter';
 import { Toasts, type Toast } from './components/Toasts';
@@ -41,12 +47,28 @@ const UNDO_MS = 5000;
 const FRESH_GLOW_MS = 8000;
 /** Set when the user closes the setup guide to look at demo data, so it doesn't reopen on every load. */
 const SETUP_DISMISSED_PREF = 'jiraPlay.setupDismissed';
+/** Set once the game-to-Jira guide has been shown for a real board. */
+const GUIDE_SEEN_PREF = 'jiraPlay.guideSeen';
+/** How the board is laid out, kept between visits. */
+const DENSITY_PREF = 'jiraPlay.density';
+const GROUPING_PREF = 'jiraPlay.grouping';
+const SORT_PREF = 'jiraPlay.sort';
+/** The boss outcome already shown, per sprint, so victory and defeat screens appear once. */
+const BOSS_OUTCOME_PREF = 'jiraPlay.bossOutcome';
+/** The boss screen waits for the XP burst and any level-up to land first. */
+const BOSS_OUTCOME_DELAY_MS = 1600;
+
+const readChoice = <T extends string>(key: string, options: readonly T[], fallback: T): T => {
+  const saved = readPref(key);
+  return options.includes(saved as T) ? (saved as T) : fallback;
+};
 
 // Dialogs load on first use, so the board itself starts faster.
 const ProfilePanel = lazy(() => import('./components/ProfilePanel').then((m) => ({ default: m.ProfilePanel })));
 const QuestDetail = lazy(() => import('./components/QuestDetail').then((m) => ({ default: m.QuestDetail })));
 const SetupGuide = lazy(() => import('./components/SetupGuide').then((m) => ({ default: m.SetupGuide })));
 const SprintRecap = lazy(() => import('./components/SprintRecap').then((m) => ({ default: m.SprintRecap })));
+const GameGuide = lazy(() => import('./components/GameGuide').then((m) => ({ default: m.GameGuide })));
 
 const TAVERN: Hero = { id: '__tavern__', name: 'Unassigned', avatarUrl: null };
 
@@ -68,8 +90,13 @@ export default function App() {
   const [recapHistory, setRecapHistory] = useState<XpEntry[] | null>(null);
   /** Board view state: what's shown, how it's grouped and ordered. None of it reaches Jira. */
   const [filter, setFilter] = useState<QuestFilter>(EMPTY_FILTER);
-  const [sort, setSort] = useState<MemberSort>('board');
-  const [grouping, setGrouping] = useState<BoardGrouping>('party');
+  const [sort, setSortState] = useState<MemberSort>(() => readChoice(SORT_PREF, MEMBER_SORTS.map((o) => o.id), 'board'));
+  const [grouping, setGroupingState] = useState<BoardGrouping>(() => readChoice(GROUPING_PREF, ['party', 'status'], 'party'));
+  const [density, setDensityState] = useState<BoardDensity>(() => readChoice(DENSITY_PREF, ['comfortable', 'compact'], 'comfortable'));
+  /** The game-to-Jira guide; `justConnected` when it opened because demo data became a real board. */
+  const [guide, setGuide] = useState<{ justConnected: boolean } | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [bossOutcome, setBossOutcome] = useState<BossOutcomeState | null>(null);
   /** An issue opened from the profile's Jira-wide list that isn't on the board. */
   const [outsideQuest, setOutsideQuest] = useState<Quest | null>(null);
   /** Bumped after changes so the profile's Jira-wide list reloads. */
@@ -98,6 +125,19 @@ export default function App() {
     return { ...serverBoard, quests: [...applyEdits(serverBoard.quests, edits), ...extra] };
   }, [serverBoard, edits, created]);
   const outsideView = useMemo(() => outsideQuest && applyEditsTo(outsideQuest, edits), [outsideQuest, edits]);
+
+  const setSort = useCallback((next: MemberSort) => {
+    setSortState(next);
+    writePref(SORT_PREF, next);
+  }, []);
+  const setGrouping = useCallback((next: BoardGrouping) => {
+    setGroupingState(next);
+    writePref(GROUPING_PREF, next);
+  }, []);
+  const setDensity = useCallback((next: BoardDensity) => {
+    setDensityState(next);
+    writePref(DENSITY_PREF, next);
+  }, []);
 
   const nextToastId = useRef(1);
   const notify = useCallback((toast: Omit<Toast, 'id' | 'durationMs'> & { durationMs?: number }) => {
@@ -176,6 +216,48 @@ export default function App() {
       }
     );
   }, [board?.me, board?.progress, members, theme.classes]);
+
+  const heroes = board?.heroes;
+  const me = board?.me;
+  const nameOf = useCallback(
+    (assigneeId: string | null) => (assigneeId === null ? TAVERN.name : (heroes?.find((h) => h.id === assigneeId)?.name ?? (me?.id === assigneeId ? me.name : undefined))),
+    [heroes, me],
+  );
+
+  /**
+   * The end of the boss fight, shown once per sprint: a victory as soon as the last issue lands, a defeat when the
+   * sprint's end date passes with HP left. The preference remembers which, so a reload doesn't replay it.
+   */
+  useEffect(() => {
+    if (!board || board.quests.length === 0) return;
+    const sprint = board.sprints[0] ?? null;
+    const boss = bossState(board.quests, sprint);
+    const kind = boss.defeated ? 'victory' : sprintOver(sprint) && boss.maxHp > 0 ? 'defeat' : null;
+    if (!kind) return;
+    const scope = `${board.source}:${sprint?.id ?? 'board'}`;
+    const seen = readPref(BOSS_OUTCOME_PREF) as Record<string, string> | undefined;
+    if (seen?.[scope] === kind) return;
+    const blow = lastBlow(board.quests);
+    const timer = setTimeout(() => {
+      writePref(BOSS_OUTCOME_PREF, { ...(seen ?? {}), [scope]: kind });
+      setBossOutcome({
+        kind,
+        sprintName: sprint?.name ?? null,
+        finalBlow: blow ? { name: nameOf(blow.assigneeId) ?? 'Someone', xp: blow.xp, key: blow.key } : null,
+        hpLeft: boss.hp,
+        maxHp: boss.maxHp,
+        nonce: Date.now(),
+      });
+      if (kind === 'victory') sfx.levelUp();
+    }, BOSS_OUTCOME_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [board, nameOf]);
+
+  const openRecap = useCallback(() => {
+    setRecapOpen(true);
+    // The history is only worth fetching once someone asks to see it.
+    if (!recapHistory) api.history().then(setRecapHistory, () => setRecapHistory([]));
+  }, [recapHistory]);
 
   /** Marks members who picked up active quests since the last poll. */
   const trackFresh = useCallback((next: Board) => {
@@ -285,6 +367,14 @@ export default function App() {
     if (board.source === 'mock' && !readPref(SETUP_DISMISSED_PREF)) setSetupOpen(true);
   }, [board]);
 
+  /** The guide opens once, the first time a real board shows: after connecting, or on a board set up before this was added. */
+  useEffect(() => {
+    if (board?.source !== 'jira' || readPref(GUIDE_SEEN_PREF)) return;
+    writePref(GUIDE_SEEN_PREF, true);
+    // oxlint-disable-next-line react/set-state-in-effect -- a one-shot decision made when the first real board arrives.
+    setGuide({ justConnected: true });
+  }, [board?.source]);
+
   const closeSetup = useCallback(() => {
     setSetupOpen(false);
     if (board?.source === 'mock') writePref(SETUP_DISMISSED_PREF, true);
@@ -344,6 +434,16 @@ export default function App() {
         if (e.key === 'Escape') closeSetup();
         return;
       }
+      if (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setPaletteOpen((open) => !open);
+        return;
+      }
+      if (paletteOpen || bossOutcome) return;
+      if (guide) {
+        if (e.key === 'Escape') setGuide(null);
+        return;
+      }
       const target = e.target instanceof HTMLElement ? e.target : null;
       if (target?.closest('input, textarea')) return;
       if (e.key.toLowerCase() === 'z' && (e.metaKey || e.ctrlKey) && !e.shiftKey && undoLast.current) {
@@ -367,7 +467,7 @@ export default function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [members, openKey, view, focused, current, openHero, stepHero, setupOpen, closeSetup, profileOpen]);
+  }, [members, openKey, view, focused, current, openHero, stepHero, setupOpen, closeSetup, profileOpen, paletteOpen, guide, bossOutcome]);
 
   /**
    * Shows a change to one issue right away as a pending edit, then sends it. On failure the edit is dropped, which
@@ -462,7 +562,7 @@ export default function App() {
       const nonce = Date.now() + Math.random();
 
       showBurst(memberFor(quest.assigneeId), { xp, levelUp: newLevel });
-      if (board?.quests.some((q) => q.key === quest.key)) setBossHit({ nonce, damage: xp });
+      if (board?.quests.some((q) => q.key === quest.key)) setBossHit({ nonce, damage: xp, by: member?.hero.name });
       if (!newLevel || !member) {
         sfx.complete();
         return;
@@ -616,6 +716,92 @@ export default function App() {
   /** Everyone an issue can go to: the party, Unassigned, and you even with no issues on the board. */
   const assignable = myMember && !members.includes(myMember) ? [...members, myMember] : members;
 
+  /** The command palette's pages. Built on open only, so the board doesn't pay for it on every render. */
+  const palette: PalettePage = paletteOpen ? buildPalette() : { title: '', placeholder: '', commands: [] };
+
+  function buildPalette(): PalettePage {
+    const issueEntries = (action: (quest: Quest) => PalettePage | void, only?: (quest: Quest) => boolean): PaletteCommand[] =>
+      board!.quests
+        .filter((q) => !only || only(q))
+        .map((q) => ({
+          id: `issue:${q.key}`,
+          label: q.summary,
+          hint: q.key,
+          group: 'Issues',
+          icon: theme.kindIcons[q.kind],
+          meta: `${nameOf(q.assigneeId) ?? ''} · ${q.status}`,
+          run: () => action(q),
+        }));
+    const pickIssue = (title: string, action: (quest: Quest) => PalettePage | void, only?: (quest: Quest) => boolean): PalettePage => ({
+      title,
+      placeholder: 'Which issue?',
+      commands: issueEntries(action, only),
+    });
+    const pickMember = (quest: Quest): PalettePage => ({
+      title: `Assign ${quest.key}`,
+      placeholder: 'To whom?',
+      commands: assignable.map((m) => ({
+        id: `member:${m.hero.id}`,
+        label: m.hero.name,
+        hint: m.isTavern ? undefined : m.cls.name,
+        group: 'People',
+        icon: m.isTavern ? theme.tavern.icon : m.cls.icon,
+        run: () => assignQuest(quest.key, m.hero.id),
+      })),
+    });
+
+    const actions: PaletteCommand[] = [
+      { id: 'done', label: 'Mark an issue as done…', group: 'Actions', icon: '✓', run: () => pickIssue('Mark done', (q) => completeQuest(q.key), (q) => !q.done) },
+      { id: 'assign', label: 'Assign an issue…', group: 'Actions', icon: '👤', run: () => pickIssue('Assign', pickMember, (q) => !q.done) },
+      { id: 'profile', label: 'Your profile', group: 'Actions', icon: '🪪', run: () => setProfileOpen(true) },
+      { id: 'recap', label: 'Sprint recap', group: 'Actions', icon: '▤', run: openRecap },
+      { id: 'refresh', label: 'Refresh the board', group: 'Actions', icon: '⟳', run: () => void refresh() },
+      { id: 'guide', label: 'How to read the board', group: 'Actions', icon: '?', run: () => setGuide({ justConnected: false }) },
+      { id: 'setup', label: board!.source === 'jira' ? 'Jira connection' : 'Connect Jira', group: 'Actions', icon: '🗝️', run: () => setSetupOpen(true) },
+      { id: 'mute', label: muted ? 'Unmute sounds' : 'Mute sounds', group: 'Actions', icon: muted ? '♪' : '⊘', run: toggleMute },
+    ];
+    const views: PaletteCommand[] = [
+      { id: 'view:party', label: `Whole ${words.party}`, group: 'View', icon: theme.partyIcon, run: () => openHero(null) },
+      { id: 'group:party', label: `Group by ${words.hero}`, group: 'View', icon: '▦', meta: grouping === 'party' ? 'current' : undefined, run: () => setGrouping('party') },
+      { id: 'group:status', label: 'Group by status', group: 'View', icon: '▥', meta: grouping === 'status' ? 'current' : undefined, run: () => setGrouping('status') },
+      { id: 'density', label: density === 'compact' ? 'Comfortable cards' : 'Compact cards', group: 'View', icon: density === 'compact' ? '▢' : '▤', run: () => setDensity(density === 'compact' ? 'comfortable' : 'compact') },
+      ...MEMBER_SORTS.map((option) => ({
+        id: `sort:${option.id}`,
+        label: `Sort ${words.heroes}: ${option.label}`,
+        group: 'View',
+        icon: '⇅',
+        meta: sort === option.id ? 'current' : undefined,
+        run: () => setSort(option.id),
+      })),
+      ...(['all', 'todo', 'doing', 'done', 'overdue'] as const).map((stage) => ({
+        id: `stage:${stage}`,
+        label: `Show ${stage === 'all' ? 'every issue' : `${stage} issues`}`,
+        group: 'View',
+        icon: '⊙',
+        meta: filter.stage === stage ? 'current' : undefined,
+        run: () => setFilter({ ...filter, stage }),
+      })),
+    ];
+    const people: PaletteCommand[] = members.map((m) => ({
+      id: `hero:${m.hero.id}`,
+      label: m.hero.name,
+      hint: m.isTavern ? 'unassigned' : m.cls.name,
+      group: words.heroes.charAt(0).toUpperCase() + words.heroes.slice(1),
+      icon: m.isTavern ? theme.tavern.icon : m.cls.icon,
+      meta: `${m.quests.filter((q) => !q.done).length} open`,
+      run: () => openHero(m.hero.id),
+    }));
+    const themes: PaletteCommand[] = [
+      { id: 'theme:system', label: 'Theme: follow the system', group: 'Themes', icon: '🌗', run: () => setTheme('system') },
+      ...THEME_LIST.map((t) => ({ id: `theme:${t.id}`, label: `Theme: ${t.name}`, hint: t.tagline, group: 'Themes', icon: t.icon, meta: t.id === theme.id ? 'current' : undefined, run: () => setTheme(t.id) })),
+    ];
+    return {
+      title: 'JiraPlay',
+      placeholder: 'Jump to an issue, a teammate or a command…',
+      commands: [...actions, ...issueEntries((q) => setOpenKey(q.key)), ...people, ...views, ...themes],
+    };
+  }
+
   return (
     <div ref={shakeScope} className="bg-arena min-h-screen lg:flex">
       {/* The roster is a long nav and comes first in the DOM at every width. */}
@@ -640,7 +826,7 @@ export default function App() {
          * The controls stay reachable on a long board, so this is its own sticky row rather than part of the
          * banner: a sticky child of the banner would only stick for the banner's own height.
          */}
-        <header className="sticky top-0 z-30 flex flex-wrap items-center justify-end gap-2 border-b border-slate-800 bg-slate-950/80 px-6 py-2 backdrop-blur sm:gap-3 lg:px-10">
+        <header className="sticky top-0 z-30 flex flex-wrap items-center justify-end gap-2 border-b border-slate-800 bg-slate-950/80 px-3 py-2 backdrop-blur sm:gap-3 sm:px-6 lg:px-10">
           {board.source === 'jira' ? (
             <button
               type="button"
@@ -661,11 +847,16 @@ export default function App() {
           )}
           <button
             type="button"
-            onClick={() => {
-              setRecapOpen(true);
-              // The history is only worth fetching once someone asks to see it.
-              if (!recapHistory) api.history().then(setRecapHistory, () => setRecapHistory([]));
-            }}
+            onClick={() => setPaletteOpen(true)}
+            title="Command palette (⌘K / Ctrl+K)"
+            aria-label="Command palette"
+            className="hidden size-9 place-items-center rounded-lg border border-slate-700 font-mono text-xs text-slate-300 hover:border-slate-500 sm:grid"
+          >
+            <span aria-hidden>⌘K</span>
+          </button>
+          <button
+            type="button"
+            onClick={openRecap}
             title="Sprint recap"
             aria-label="Sprint recap"
             className="grid size-9 place-items-center rounded-lg border border-slate-700 text-slate-300 hover:border-slate-500"
@@ -693,6 +884,15 @@ export default function App() {
           </button>
           <button
             type="button"
+            onClick={() => setGuide({ justConnected: false })}
+            title="How to read the board"
+            aria-label="How to read the board"
+            className="grid size-9 place-items-center rounded-lg border border-slate-700 text-slate-300 hover:border-slate-500"
+          >
+            <span aria-hidden>?</span>
+          </button>
+          <button
+            type="button"
             onClick={toggleMute}
             title={muted ? 'Unmute' : 'Mute'}
             aria-label={muted ? 'Unmute' : 'Mute'}
@@ -713,8 +913,8 @@ export default function App() {
           )}
         </header>
 
-        <div className="px-6 pt-6 lg:px-10">
-          <SprintBanner sprints={board.sprints} quests={board.quests} partyXp={partyXp} hit={bossHit} />
+        <div className="px-4 pt-5 sm:px-6 sm:pt-6 lg:px-10">
+          <SprintBanner sprints={board.sprints} quests={board.quests} partyXp={partyXp} hit={bossHit} nameOf={nameOf} />
         </div>
 
         {loadError && (
@@ -734,7 +934,7 @@ export default function App() {
           </div>
         )}
 
-        <main id="board" className="px-4 pb-16 pt-8 lg:px-10">
+        <main id="board" className="px-3 pb-16 pt-6 sm:px-4 sm:pt-8 lg:px-10">
           {focused ? (
             <HeroFocus
               member={focused}
@@ -761,6 +961,8 @@ export default function App() {
                 onSort={setSort}
                 grouping={grouping}
                 onGrouping={setGrouping}
+                density={density}
+                onDensity={setDensity}
                 showing={visibleQuests.length}
                 total={board.quests.length}
               />
@@ -778,7 +980,7 @@ export default function App() {
                 />
               </div>
             ) : (
-              <div className="flex flex-wrap items-start justify-center gap-x-6 gap-y-12 pt-6">
+              <div className={`flex flex-wrap items-start justify-center pt-6 ${density === 'compact' ? 'gap-x-3 gap-y-8' : 'gap-x-6 gap-y-12'}`}>
                 {shownMembers.map((m) => (
                   <CharacterCard
                     key={m.hero.id}
@@ -786,6 +988,7 @@ export default function App() {
                     filter={filter}
                     selected={m.hero.id === selectedId}
                     fresh={fresh.has(m.hero.id)}
+                    compact={density === 'compact'}
                     burst={bursts[m.hero.id]}
                     onOpenHero={onOpenHero}
                     onOpenQuest={onOpenQuest}
@@ -803,8 +1006,8 @@ export default function App() {
           )}
         </main>
 
-        <footer className="px-6 pb-8 text-center font-pixel text-pixel-xs uppercase leading-loose text-slate-400">
-          {`← → switch ${words.hero} · enter open · esc whole ${words.party} · drag an issue onto a ${words.hero} to reassign`}
+        <footer className="px-4 pb-8 text-center font-pixel text-pixel-xs uppercase leading-loose text-slate-400 sm:px-6">
+          {`⌘K commands · ← → switch ${words.hero} · enter open · esc whole ${words.party} · drag an issue onto a ${words.hero} to reassign`}
         </footer>
       </div>
 
@@ -847,6 +1050,30 @@ export default function App() {
           {recapOpen && recapHistory && <SprintRecap key="recap" board={board} history={recapHistory} onClose={() => setRecapOpen(false)} />}
         </AnimatePresence>
       </Suspense>
+
+      <Suspense fallback={null}>
+        <AnimatePresence>
+          {guide && <GameGuide key="guide" justConnected={guide.justConnected} onClose={() => setGuide(null)} />}
+        </AnimatePresence>
+      </Suspense>
+
+      <AnimatePresence>
+        {bossOutcome && (
+          <BossOutcome
+            key={bossOutcome.nonce}
+            outcome={bossOutcome}
+            onRecap={() => {
+              setBossOutcome(null);
+              openRecap();
+            }}
+            onClose={() => setBossOutcome(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {paletteOpen && <CommandPalette key="palette" root={palette} onClose={() => setPaletteOpen(false)} />}
+      </AnimatePresence>
 
       {setupGuide}
       {toastView}

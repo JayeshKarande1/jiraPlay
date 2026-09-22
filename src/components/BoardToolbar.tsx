@@ -6,6 +6,8 @@ import type { QuestKind } from '../../shared/types';
 import { useTheme } from '../lib/activeTheme';
 
 export type BoardGrouping = 'party' | 'status';
+/** How much each card shows: comfortable for a small party, compact for a big one. */
+export type BoardDensity = 'comfortable' | 'compact';
 
 interface Props {
   filter: QuestFilter;
@@ -14,6 +16,8 @@ interface Props {
   onSort: (next: MemberSort) => void;
   grouping: BoardGrouping;
   onGrouping: (next: BoardGrouping) => void;
+  density: BoardDensity;
+  onDensity: (next: BoardDensity) => void;
   /** How many issues the filter keeps, and how many there are. */
   showing: number;
   total: number;
@@ -28,7 +32,7 @@ const STAGE_TABS: { id: QuestFilter['stage']; label: string }[] = [
 ];
 
 /** Find, narrow and reorder the board. Everything here is a view: nothing is sent to Jira. */
-export function BoardToolbar({ filter, onFilter, sort, onSort, grouping, onGrouping, showing, total }: Props) {
+export function BoardToolbar({ filter, onFilter, sort, onSort, grouping, onGrouping, density, onDensity, showing, total }: Props) {
   const theme = useTheme();
   const search = useRef<HTMLInputElement>(null);
 
@@ -130,6 +134,26 @@ export function BoardToolbar({ filter, onFilter, sort, onSort, grouping, onGroup
             ))}
           </select>
         </label>
+      )}
+
+      {grouping === 'party' && (
+        <div role="group" aria-label="Card size" className="flex overflow-hidden rounded-lg border border-slate-700">
+          {(['comfortable', 'compact'] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={density === option}
+              title={option === 'compact' ? 'Compact cards: more of the party on screen' : 'Comfortable cards'}
+              onClick={() => onDensity(option)}
+              className={`px-2 py-1 font-pixel text-pixel-xs uppercase transition-colors ${
+                density === option ? 'bg-amber-400/15 text-amber-200' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <span aria-hidden>{option === 'compact' ? '▤' : '▢'}</span>
+              <span className="sr-only sm:not-sr-only sm:ml-1">{option}</span>
+            </button>
+          ))}
+        </div>
       )}
 
       <p role="status" className={`text-meta ${narrowed ? 'text-amber-300' : 'text-slate-400'}`}>

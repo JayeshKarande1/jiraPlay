@@ -14,7 +14,15 @@ function timeLeft(endDate: string) {
   return { text: `${days} days left`, tone: 'text-emerald-300' };
 }
 
-export function SprintBanner({ sprints, quests, partyXp, hit }: { sprints: Sprint[]; quests: Quest[]; partyXp: number; hit?: BossHit }) {
+interface Props {
+  sprints: Sprint[];
+  quests: Quest[];
+  partyXp: number;
+  hit?: BossHit;
+  nameOf?: (assigneeId: string | null) => string | undefined;
+}
+
+export function SprintBanner({ sprints, quests, partyXp, hit, nameOf }: Props) {
   const { words } = useTheme();
   const [sprint, ...others] = sprints;
   const left = sprint?.endDate ? timeLeft(sprint.endDate) : null;
@@ -26,7 +34,7 @@ export function SprintBanner({ sprints, quests, partyXp, hit }: { sprints: Sprin
         key={sprint?.id ?? 'none'}
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="theme-title mt-3 break-words font-pixel text-2xl leading-tight text-white sm:text-4xl xl:text-5xl"
+        className="theme-title mt-3 break-words font-pixel text-xl leading-tight text-white sm:text-4xl xl:text-5xl"
       >
         {sprint?.name ?? 'No active sprint'}
       </motion.h1>
@@ -45,7 +53,7 @@ export function SprintBanner({ sprints, quests, partyXp, hit }: { sprints: Sprin
       </div>
       {sprint?.goal && <p className="mt-2 max-w-3xl text-slate-300">🎯 {sprint.goal}</p>}
 
-      <BossFight quests={quests} sprint={sprint ?? null} hit={hit} />
+      <BossFight quests={quests} sprint={sprint ?? null} hit={hit} nameOf={nameOf} />
     </section>
   );
 }

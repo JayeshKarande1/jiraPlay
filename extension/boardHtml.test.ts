@@ -27,6 +27,11 @@ describe('boardPage', () => {
     expect(html).toContain('href="vscode-webview://board/assets/index.css"');
   });
 
+  it('marks a system preference next to the resolved theme, so the page can follow the editor', () => {
+    expect(page({ theme: 'daylight', themePref: 'system' })).toContain('data-theme="daylight" data-theme-pref="system"');
+    expect(page({ theme: 'daylight', themePref: 'daylight' })).not.toContain('data-theme-pref');
+  });
+
   it('runs scripts only by nonce or from the bundle, and nothing else at all', () => {
     const csp = cspOf(page());
     expect(csp).toContain("default-src 'none'");

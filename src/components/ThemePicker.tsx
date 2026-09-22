@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { setTheme, useTheme } from '../lib/activeTheme';
+import { setTheme, useTheme, useThemePref } from '../lib/activeTheme';
 import { sfx } from '../lib/sound';
-import { THEME_LIST } from '../../shared/themes';
+import { DEFAULT_LIGHT_THEME, DEFAULT_THEME, LIGHT_THEMES, THEME_LIST, THEMES } from '../../shared/themes';
 
 export function ThemePicker() {
   const theme = useTheme();
+  const pref = useThemePref();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -53,9 +54,36 @@ export function ThemePicker() {
             className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-700 bg-slate-950 p-2 shadow-2xl"
           >
             <p className="px-2 pb-2 pt-1 font-pixel text-pixel-xs text-slate-400">CHOOSE A THEME</p>
+            <button
+              type="button"
+              aria-pressed={pref === 'system'}
+              onClick={() => {
+                setTheme('system');
+                sfx.select();
+                setOpen(false);
+              }}
+              className={`mb-1 flex w-full items-center gap-3 rounded-lg border p-2 text-left transition-colors ${
+                pref === 'system' ? 'border-amber-400 bg-slate-800/80' : 'border-transparent hover:bg-slate-900'
+              }`}
+            >
+              <span
+                className="grid size-11 shrink-0 place-items-center rounded-md text-xl"
+                style={{ background: `linear-gradient(135deg, ${THEMES[DEFAULT_THEME].swatch[0]} 50%, ${THEMES[DEFAULT_LIGHT_THEME].swatch[0]} 50%)` }}
+              >
+                🌗
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm text-white">Follow the system</span>
+                <span className="block truncate text-xs text-slate-400">
+                  {THEMES[DEFAULT_THEME].name} when it's dark, {THEMES[DEFAULT_LIGHT_THEME].name} when it's light
+                </span>
+              </span>
+              {pref === 'system' && <span className="text-amber-300">✓</span>}
+            </button>
             <ul className="space-y-1">
               {THEME_LIST.map((t) => {
-                const active = t.id === theme.id;
+                const active = pref === t.id;
+                const light = LIGHT_THEMES.includes(t.id);
                 return (
                   <li key={t.id}>
                     <button
@@ -79,6 +107,7 @@ export function ThemePicker() {
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm text-white" style={{ fontFamily: t.font }}>
                           {t.name}
+                          {light && <span className="ml-2 rounded bg-slate-800 px-1 font-sans text-pixel-xs uppercase text-slate-400">light</span>}
                         </span>
                         <span className="block truncate text-xs text-slate-400">{t.tagline}</span>
                       </span>

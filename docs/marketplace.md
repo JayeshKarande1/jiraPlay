@@ -28,7 +28,8 @@ Install it, sign in with your own Jira account, and your board opens right insid
 - **Achievements.** Eleven badges, from First Blood to Legend, earned only from finished work.
 - **Earned classes.** After three finished issues, a hero's class follows what they actually do: squash bugs and you're the Rogue, take on epics and you're the Oracle.
 - **Level-ups** take over the screen with confetti and a shake (turned off when your system asks for reduced motion).
-- **Eight themes:** Arcade, Space Fleet, Heist City, Wizard School, Neon Cyber, Block World, Grand Prix and **Daylight**, a light theme. Each changes colours, fonts, wording, classes, the boss and the sound.
+- **Boss fight scenes.** Every hit credits who landed it; when the last issue lands you get a victory screen with the final blow, and when a sprint ends with HP left the boss escapes. Both lead into the sprint recap.
+- **Eleven themes:** Arcade, Space Fleet, Heist City, Wizard School, Neon Cyber, Block World, Grand Prix, **Noir** (black and white, in the rain), and three light ones: **Daylight**, **Paperback** and **Office**, a plain one with no game styling for screens shared in meetings. Each changes colours, fonts, wording, classes, the boss and the sound. **Follow the system** switches between Arcade and Daylight with your editor's colour theme.
 
 ![A hero's page with columns from the Jira board, streak and achievements](media/screenshots/hero.webp)
 
@@ -39,7 +40,10 @@ Install it, sign in with your own Jira account, and your board opens right insid
 - **Change status** from an issue's Status menu, which lists the moves your workflow allows.
 - **Reassign** by dragging an issue onto a hero, or with the **Assign** menu inside the issue (works with the keyboard and screen readers).
 - **Comments:** read the latest 50 and add your own (⌘/Ctrl+Enter posts).
-- **Your profile** (your avatar, top right): your level, achievements and a searchable list of your issues on the board or across all of Jira.
+- **Command palette** (⌘K / Ctrl+K): jump to any issue or teammate, mark an issue done, assign it, switch grouping, sorting, filters or the theme, all from the keyboard.
+- **Compact cards** (toolbar) fit a bigger team on one screen; the grouping, sort and card size you pick are remembered.
+- **Your profile** (your avatar, top right): your level, a badge cabinet with every achievement and how to earn the locked ones, your personal bests and level timeline, and a searchable list of your issues on the board or across all of Jira.
+- **How to read the board** (the ? button) maps the game's terms to Jira's. It opens once by itself the first time a real board loads.
 - **New issue** with "+ New issue" (needs a project key). It only stays on the board if it matches your JQL.
 
 If a change fails, the board puts the issue back and tells you why. Boards over 1,000 issues show the first 1,000 and say so.

@@ -149,12 +149,12 @@ export function ProfilePanel({ member, columns, version, onClose, onOpenQuest, o
               <p className="mb-2 text-sm text-slate-300">
                 🔥 {member.progress.streak}-day streak · {member.progress.sprintXp} {theme.words.xp} this sprint
               </p>
-              <AchievementBadges earned={member.progress.achievements} />
+              <AchievementBadges earned={member.progress.achievements} cabinet />
             </div>
           )}
 
-          <details className="mt-4 rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2">
-            <summary className="cursor-pointer font-pixel text-pixel-sm uppercase text-slate-400">Your trends</summary>
+          <details open className="mt-4 rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2">
+            <summary className="cursor-pointer font-pixel text-pixel-sm uppercase text-slate-400">Your history</summary>
             <Trends heroId={member.hero.id} />
           </details>
 

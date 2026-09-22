@@ -1,4 +1,4 @@
-import type { ThemeId } from '../shared/themes';
+import type { ThemeId, ThemePref } from '../shared/themes';
 
 /** What the Vite manifest says the board's entry point is. */
 export interface BoardEntry {
@@ -13,7 +13,10 @@ export interface BoardPageInput {
   asset: (path: string) => string;
   /** The webview's own source, the only origin the bundle is served from. */
   cspSource: string;
+  /** The theme for the first paint, already resolved. */
   theme: ThemeId;
+  /** What the setting says, when that's `system` rather than the theme itself. */
+  themePref?: ThemePref;
   /** Extra hosts avatars may come from. Already validated; see allowedHostsSetting. */
   allowedHosts: string[];
   /** A fresh, per-page nonce. The only thing that may run a script besides the bundle itself. */
@@ -27,7 +30,7 @@ export const NOT_BUILT_PAGE =
  * The webview's page: the Vite bundle behind a Content Security Policy that allows nothing else.
  * Pure, so the policy it produces can be tested without a webview.
  */
-export function boardPage({ entry, asset, cspSource, theme, allowedHosts, nonce }: BoardPageInput): string {
+export function boardPage({ entry, asset, cspSource, theme, themePref, allowedHosts, nonce }: BoardPageInput): string {
   if (!entry) return NOT_BUILT_PAGE;
 
   // Avatars come from the Jira site, Atlassian's avatar CDN or Gravatar. Nothing else is loaded from the network.
@@ -48,7 +51,7 @@ export function boardPage({ entry, asset, cspSource, theme, allowedHosts, nonce 
   ].join('; ');
 
   return `<!doctype html>
-<html lang="en" data-theme="${theme}">
+<html lang="en" data-theme="${theme}"${themePref === 'system' ? ' data-theme-pref="system"' : ''}>
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="Content-Security-Policy" content="${csp}" />

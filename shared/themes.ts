@@ -3,11 +3,26 @@ import type { HeroClass } from './heroes';
 
 // Colors, fonts and backgrounds live in index.css under [data-theme]; this file holds everything the components render.
 
-export const THEME_IDS = ['arcade', 'space', 'heist', 'wizard', 'cyber', 'blocky', 'racing', 'daylight'] as const;
+export const THEME_IDS = ['arcade', 'space', 'heist', 'wizard', 'cyber', 'blocky', 'racing', 'daylight', 'paper', 'noir', 'office'] as const;
 export type ThemeId = (typeof THEME_IDS)[number];
 export const DEFAULT_THEME: ThemeId = 'arcade';
+/** The theme used for a light system or editor theme when the preference is `system`. */
+export const DEFAULT_LIGHT_THEME: ThemeId = 'daylight';
 
 export const isThemeId = (value: unknown): value is ThemeId => THEME_IDS.includes(value as ThemeId);
+
+/** What can be saved as the theme: a theme, or `system` to follow the OS or editor between the default dark and light themes. */
+export type ThemePref = ThemeId | 'system';
+export const isThemePref = (value: unknown): value is ThemePref => value === 'system' || isThemeId(value);
+
+/** The theme to show for a saved preference, given whether the surroundings are dark. */
+export function resolveThemePref(pref: ThemePref, dark: boolean): ThemeId {
+  if (pref !== 'system') return pref;
+  return dark ? DEFAULT_THEME : DEFAULT_LIGHT_THEME;
+}
+
+/** Themes drawn on a light ground. New UI has to read on these as well as on the dark ones. */
+export const LIGHT_THEMES: readonly ThemeId[] = ['daylight', 'paper', 'office'];
 
 /** The oscillator wave for a theme's sound effects; the same values as the Web Audio OscillatorType. */
 export type SoundWave = 'sine' | 'square' | 'sawtooth' | 'triangle';
@@ -383,6 +398,127 @@ export const THEMES: Record<ThemeId, Theme> = {
     wave: 'triangle',
     intro: { sprite: '☀️', path: 'arc', trail: '✨', backdrop: 'glow' },
     boss: { name: 'The Overcast Ogre', icon: '⛈️' },
+  },
+
+  paper: {
+    id: 'paper',
+    name: 'Paperback',
+    icon: '📰',
+    tagline: 'Ink on cream: a light comic strip',
+    font: '"Anton", sans-serif',
+    swatch: ['#f7f1e3', '#b91c1c', '#1d4ed8'],
+    words: {
+      party: 'crew',
+      hero: 'character',
+      heroes: 'characters',
+      level: 'VOL.',
+      xp: 'XP',
+      levelUp: 'NEW ISSUE OUT!',
+      loading: 'PRINTING…',
+      gameOver: 'OUT OF PRINT',
+      retry: 'REPRINT?',
+      newIssue: 'EXTRA!',
+      allDone: 'The end. ✒️',
+    },
+    partyIcon: '🗞️',
+    // Ink colours, dark enough for names and borders on cream.
+    classes: [
+      { name: 'Reporter', icon: '📝', color: '#1d4ed8' },
+      { name: 'Sidekick', icon: '🦸', color: '#b45309' },
+      { name: 'Editor', icon: '🖋️', color: '#15803d' },
+      { name: 'Detective', icon: '🕵️', color: '#b91c1c' },
+      { name: 'Mastermind', icon: '🧠', color: '#6d28d9' },
+    ],
+    tavern: { name: 'Unassigned', icon: '📮', color: '#b45309' },
+    kindIcons: { story: '📖', task: '✏️', bug: '🪲', epic: '📚', subtask: '📎' },
+    stageIcons: { todo: '📄', doing: '🖨️', done: '✅' },
+    heart: '♥',
+    uiIcons: { streak: '💥', due: '📅' },
+    confetti: ['#b91c1c', '#1d4ed8', '#f59e0b', '#15803d', '#111827'],
+    wave: 'triangle',
+    intro: { sprite: '🗞️', path: 'diagonal', trail: '💥', backdrop: 'sparkles', spin: true },
+    boss: { name: 'The Deadline Dragon', icon: '🐲' },
+  },
+
+  noir: {
+    id: 'noir',
+    name: 'Noir',
+    icon: '🕷️',
+    tagline: 'Rain, shadows and one splash of red',
+    font: '"Anton", sans-serif',
+    swatch: ['#0a0a0a', '#f5f5f4', '#dc2626'],
+    words: {
+      party: 'syndicate',
+      hero: 'vigilante',
+      heroes: 'vigilantes',
+      level: 'RANK',
+      xp: 'XP',
+      levelUp: 'CASE CLOSED!',
+      loading: 'THE CITY NEVER SLEEPS…',
+      gameOver: 'FADE TO BLACK',
+      retry: 'ONE MORE NIGHT?',
+      newIssue: 'NEW LEAD!',
+      allDone: 'Case closed. 🕸️',
+    },
+    partyIcon: '🏙️',
+    // Black and white, with red kept for the one class that hunts bugs.
+    classes: [
+      { name: 'Reporter', icon: '📰', color: '#f5f5f4' },
+      { name: 'Informant', icon: '🎩', color: '#b8b2ad' },
+      { name: 'Gumshoe', icon: '🔍', color: '#d6d0cb' },
+      { name: 'Vigilante', icon: '🕷️', color: '#ef4444' },
+      { name: 'Crime Boss', icon: '🎭', color: '#9a9490' },
+    ],
+    tavern: { name: 'Unassigned', icon: '🗄️', color: '#b8b2ad' },
+    kindIcons: { story: '📰', task: '🔦', bug: '🕷️', epic: '🏙️', subtask: '🗂️' },
+    stageIcons: { todo: '🌧️', doing: '🕵️', done: '🕸️' },
+    heart: '♥',
+    uiIcons: { streak: '🌩️', due: '⏱️' },
+    confetti: ['#fafaf9', '#a8a29e', '#57534e', '#dc2626', '#ffffff'],
+    wave: 'sine',
+    intro: { sprite: '🕷️', path: 'arc', trail: '🕸️', backdrop: 'sparkles' },
+    boss: { name: 'The Crime Lord', icon: '🎩' },
+  },
+
+  office: {
+    id: 'office',
+    name: 'Office',
+    icon: '🗂️',
+    tagline: 'Plain and professional: no game dressing',
+    font: '"Rubik", sans-serif',
+    swatch: ['#ffffff', '#2563eb', '#64748b'],
+    // Plain words: this theme is for screens shared in meetings.
+    words: {
+      party: 'team',
+      hero: 'teammate',
+      heroes: 'teammates',
+      level: 'Level',
+      xp: 'pts',
+      levelUp: 'Level up',
+      loading: 'Loading…',
+      gameOver: 'Could not load the board',
+      retry: 'Try again',
+      newIssue: 'New',
+      allDone: 'All done.',
+    },
+    partyIcon: '👥',
+    // Roles rather than classes, in CLASS_BEHAVIOURS order: stories, subtasks, tasks, bugs, epics.
+    classes: [
+      { name: 'Product', icon: '◆', color: '#1d4ed8' },
+      { name: 'Support', icon: '◆', color: '#0f766e' },
+      { name: 'Operations', icon: '◆', color: '#4d7c0f' },
+      { name: 'Quality', icon: '◆', color: '#b91c1c' },
+      { name: 'Architecture', icon: '◆', color: '#6d28d9' },
+    ],
+    tavern: { name: 'Unassigned', icon: '◇', color: '#64748b' },
+    kindIcons: { story: '▣', task: '☑', bug: '●', epic: '◈', subtask: '▫' },
+    stageIcons: { todo: '○', doing: '◐', done: '●' },
+    heart: '●',
+    uiIcons: { streak: '↗', due: '◷' },
+    confetti: ['#2563eb', '#0f766e', '#64748b', '#94a3b8', '#1d4ed8'],
+    wave: 'sine',
+    intro: { sprite: '📎', path: 'ltr', trail: null, backdrop: 'glow' },
+    boss: { name: 'Sprint scope', icon: '🎯' },
   },
 };
 

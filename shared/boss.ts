@@ -31,3 +31,31 @@ export function bossState(quests: Quest[], sprint: Sprint | null, now: Date = ne
   const defeated = maxHp > 0 && hp === 0;
   return { maxHp, hp, elapsed, enraged: !defeated && elapsed !== null && elapsed >= ENRAGE_AT && hp > maxHp / 2, defeated };
 }
+
+/** The most recently finished issue: who dealt the boss its latest blow, and how hard. Null before any work is done. */
+export interface BossBlow {
+  key: string;
+  assigneeId: string | null;
+  xp: number;
+  at: string;
+}
+
+/**
+ * The last blow landed on the boss, from Jira's resolution dates: the credit for a defeat survives a reload, and
+ * for a sprint that was finished before the board was even opened.
+ */
+export function lastBlow(quests: Quest[]): BossBlow | null {
+  let best: Quest | null = null;
+  for (const quest of quests) {
+    if (!quest.done || !quest.resolvedAt) continue;
+    if (!best || quest.resolvedAt > best.resolvedAt!) best = quest;
+  }
+  return best ? { key: best.key, assigneeId: best.assigneeId, xp: questXp(best), at: best.resolvedAt! } : null;
+}
+
+/** Whether the sprint's end date has passed, so the fight is over one way or the other. */
+export function sprintOver(sprint: Sprint | null, now: Date = new Date()): boolean {
+  if (!sprint?.endDate) return false;
+  const end = Date.parse(sprint.endDate);
+  return !Number.isNaN(end) && end < now.getTime();
+}

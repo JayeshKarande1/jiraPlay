@@ -1,6 +1,6 @@
 import { dayKey, localDay } from './days';
 import type { Quest, QuestKind, Sprint, XpEntry } from './types';
-import { questXp } from './xp';
+import { levelStats, questXp } from './xp';
 
 /**
  * Sprint and personal history, read entirely from the saved XP ledger. Every entry is already stamped with when
@@ -164,4 +164,78 @@ export function kindMix(ledger: XpEntry[], heroId: string): { kind: QuestKind; c
     kinds.set(entry.kind, { completed: bucket.completed + 1, xp: bucket.xp + entry.xp });
   }
   return [...kinds].map(([kind, v]) => ({ kind, ...v })).sort((a, b) => b.completed - a.completed);
+}
+
+/** One level reached, and the day it happened. */
+export interface LevelMilestone {
+  level: number;
+  /** Local YYYY-MM-DD. */
+  day: string;
+  /** The issue that tipped the hero over. */
+  key: string;
+}
+
+/**
+ * Every level a hero has reached so far, in order, from replaying their ledger. Level 1 is where everyone starts,
+ * so the list begins at level 2.
+ */
+export function levelMilestones(ledger: XpEntry[], heroId: string): LevelMilestone[] {
+  const entries = ledger.filter((e) => e.heroId === heroId).sort((a, b) => a.at.localeCompare(b.at));
+  const milestones: LevelMilestone[] = [];
+  let xp = 0;
+  let level = 1;
+  for (const entry of entries) {
+    xp += entry.xp;
+    const reached = levelStats(xp).level;
+    // One big issue can skip a level; every level passed still gets its own line.
+    while (level < reached) {
+      level++;
+      milestones.push({ level, day: localDay(entry.at), key: entry.key });
+    }
+  }
+  return milestones;
+}
+
+export interface PersonalBests {
+  completed: number;
+  xp: number;
+  /** The day with the most XP, or null with nothing finished. */
+  bestDay: { day: string; xp: number; completed: number } | null;
+  /** The week (by its Monday) with the most XP, or null with nothing finished. */
+  bestWeek: { weekStart: string; xp: number; completed: number } | null;
+  /** The single biggest issue by XP, or null with nothing finished. */
+  biggest: { key: string; xp: number } | null;
+  /** The local day of the first finished issue, or null. */
+  firstDay: string | null;
+}
+
+/** A hero's records, from their whole ledger. */
+export function personalBests(ledger: XpEntry[], heroId: string): PersonalBests {
+  const entries = ledger.filter((e) => e.heroId === heroId);
+  const days = new Map<string, { xp: number; completed: number }>();
+  const weeks = new Map<string, { xp: number; completed: number }>();
+  let biggest: PersonalBests['biggest'] = null;
+  let firstDay: string | null = null;
+  for (const entry of entries) {
+    const day = localDay(entry.at);
+    const week = weekStart(day);
+    const d = days.get(day) ?? { xp: 0, completed: 0 };
+    days.set(day, { xp: d.xp + entry.xp, completed: d.completed + 1 });
+    const w = weeks.get(week) ?? { xp: 0, completed: 0 };
+    weeks.set(week, { xp: w.xp + entry.xp, completed: w.completed + 1 });
+    if (!biggest || entry.xp > biggest.xp) biggest = { key: entry.key, xp: entry.xp };
+    if (!firstDay || day < firstDay) firstDay = day;
+  }
+  const top = <K extends string, V extends { xp: number }>(map: Map<K, V>) =>
+    [...map].reduce<[K, V] | null>((best, pair) => (best && best[1].xp >= pair[1].xp ? best : pair), null);
+  const bestDay = top(days);
+  const bestWeek = top(weeks);
+  return {
+    completed: entries.length,
+    xp: entries.reduce((sum, e) => sum + e.xp, 0),
+    bestDay: bestDay ? { day: bestDay[0], ...bestDay[1] } : null,
+    bestWeek: bestWeek ? { weekStart: bestWeek[0], ...bestWeek[1] } : null,
+    biggest,
+    firstDay,
+  };
 }

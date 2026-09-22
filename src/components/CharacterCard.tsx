@@ -17,6 +17,8 @@ interface Props {
   filter: QuestFilter;
   selected: boolean;
   fresh: boolean;
+  /** Compact cards are narrower, drop the labels and cap the list lower, so a big party fits on one screen. */
+  compact?: boolean;
   burst?: Burst;
   /** Handlers take ids, so the board can pass the same functions to every card. */
   onOpenHero: (memberId: string) => void;
@@ -28,7 +30,7 @@ interface Props {
 
 /** Re-renders only when this card's own hero, issues or highlight change. */
 export const CharacterCard = memo(
-  function CharacterCard({ member, filter, selected, fresh, burst, onOpenHero, onOpenQuest, onCompleteQuest, onDropQuest, onCreateQuest }: Props) {
+  function CharacterCard({ member, filter, selected, fresh, compact = false, burst, onOpenHero, onOpenQuest, onCompleteQuest, onDropQuest, onCreateQuest }: Props) {
     const { hero, cls, isTavern, quests } = member;
     const theme = useTheme();
     const ref = useRef<HTMLElement>(null);
@@ -56,7 +58,7 @@ export const CharacterCard = memo(
         animate={{ y: selected ? -10 : 0, scale: hover ? 1.03 : 1 }}
         transition={{ type: 'spring', stiffness: 400, damping: 28 }}
         title={`Open ${hero.name}'s issues`}
-        className="relative flex w-72 cursor-pointer flex-col rounded-2xl border-2 bg-slate-950/85 p-4 backdrop-blur"
+        className={`relative flex max-w-full cursor-pointer flex-col rounded-2xl border-2 bg-slate-950/85 backdrop-blur ${compact ? 'w-60 p-3' : 'w-72 p-4'}`}
         style={{
           borderColor: selected || hover ? cls.color : `${cls.color}40`,
           boxShadow: selected ? `0 0 0 1px ${cls.color}, 0 12px 40px -8px ${cls.color}99` : fresh ? `0 0 24px -4px ${cls.color}` : 'none',
@@ -86,13 +88,18 @@ export const CharacterCard = memo(
         </button>
 
         <div className="flex items-center gap-3">
-          <HeroAvatar member={member} />
+          <HeroAvatar member={member} size={compact ? 'sm' : 'md'} />
           <div className="min-w-0 flex-1">
-            <h2 className="truncate font-semibold text-white">{hero.name}</h2>
-            <p className="mt-1 font-pixel text-pixel-sm uppercase" style={{ color: cls.color }}>
+            <h2 className={`truncate font-semibold text-white ${compact ? 'text-sm' : ''}`}>{hero.name}</h2>
+            <p className={`${compact ? 'mt-0.5' : 'mt-1'} font-pixel text-pixel-sm uppercase`} style={{ color: cls.color }}>
               {cls.name}
+              {compact && !isTavern && (
+                <span className="ml-2 text-amber-300">
+                  {theme.words.level} {stats.level}
+                </span>
+              )}
             </p>
-            {!isTavern && (
+            {!isTavern && !compact && (
               <p className="mt-2 font-pixel text-xs text-amber-300">
                 {theme.words.level} {stats.level}
               </p>
@@ -101,12 +108,12 @@ export const CharacterCard = memo(
         </div>
 
         {!isTavern && (
-          <div className="mt-4">
-            <XpBar stats={stats} color={cls.color} />
+          <div className={compact ? 'mt-2' : 'mt-4'}>
+            <XpBar stats={stats} color={cls.color} showLabels={!compact} height={compact ? 'h-1.5' : 'h-3'} />
           </div>
         )}
 
-        <div className="mt-3 flex items-center justify-between text-xs">
+        <div className={`${compact ? 'mt-2' : 'mt-3'} flex items-center justify-between text-xs`}>
           {isTavern ? <span className="text-slate-400">Drag issues here to unassign</span> : <Hearts overdue={stats.overdue} />}
           <span className="shrink-0 text-slate-400">
             {theme.stageIcons.doing} {active.length} · ✔ {cleared.length}
@@ -122,9 +129,9 @@ export const CharacterCard = memo(
           </span>
         </div>
 
-        <div className="mt-4 border-t border-slate-800 pt-3">
-          <p className="mb-2 font-pixel text-pixel-sm text-slate-400">ISSUES</p>
-          <ul className="max-h-80 space-y-2 overflow-y-auto pr-1">
+        <div className={`border-t border-slate-800 ${compact ? 'mt-3 pt-2' : 'mt-4 pt-3'}`}>
+          {!compact && <p className="mb-2 font-pixel text-pixel-sm text-slate-400">ISSUES</p>}
+          <ul className={`space-y-2 overflow-y-auto pr-1 ${compact ? 'max-h-52' : 'max-h-80'}`}>
             <AnimatePresence initial={false}>{active.map(renderQuest)}</AnimatePresence>
           </ul>
           {active.length === 0 && (
@@ -161,6 +168,7 @@ export const CharacterCard = memo(
     prev.filter === next.filter &&
     prev.selected === next.selected &&
     prev.fresh === next.fresh &&
+    prev.compact === next.compact &&
     prev.burst === next.burst &&
     prev.onOpenHero === next.onOpenHero &&
     prev.onOpenQuest === next.onOpenQuest &&

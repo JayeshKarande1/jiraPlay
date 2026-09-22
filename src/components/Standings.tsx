@@ -10,7 +10,7 @@ const SHOWN = 5;
 
 /** The party's leaderboard for this sprint, by XP earned. You're always listed once you've scored. */
 export function Standings({ progress, members, meId }: { progress: Record<string, HeroProgress>; members: Member[]; meId: string | null }) {
-  const { words } = useTheme();
+  const { words, uiIcons } = useTheme();
   const ranked = standings(progress);
   const byId = new Map(members.map((m) => [m.hero.id, m]));
   const myRank = meId ? ranked.findIndex((p) => p.heroId === meId) : -1;
@@ -47,7 +47,7 @@ export function Standings({ progress, members, meId }: { progress: Record<string
                   </span>
                   <span className="block text-xs text-slate-400">
                     {words.level} {levelStats(p.xp).level}
-                    {p.streak >= 2 && ` · 🔥 ${p.streak}-day streak`}
+                    {p.streak >= 2 && ` · ${uiIcons.streak} ${p.streak}-day streak`}
                   </span>
                 </span>
                 <span className="shrink-0 font-pixel text-pixel-md text-amber-300">
